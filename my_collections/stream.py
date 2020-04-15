@@ -18,7 +18,7 @@ class Stream:
 
 
 def int_stream(first=1) -> Stream:
-    def compute_rest():
+    def compute_rest(): 
         return int_stream(first+1)
     return Stream(first, compute_rest)
 
@@ -26,10 +26,8 @@ def int_stream(first=1) -> Stream:
 def map_stream(f, s: Stream) -> Stream:
     if s.empty:
         return s
-
-    def compute_rest():
+    def compute_rest(): 
         return map_stream(f, s.rest)
-
     return Stream(f(s.first), compute_rest)
 
 
@@ -39,7 +37,7 @@ def filter_stream(f, s: Stream):
 
     def compute_rest():
         return filter_stream(f, s.rest)
-
+        
     if f(s.first):
         return Stream(s.first, compute_rest)
     return compute_rest()
@@ -68,6 +66,7 @@ def find_prime(s=int_stream(2)) -> Stream:
     def compute_rest():
         return filter_stream(lambda x: x % s.first != 0, find_prime(s.rest))
     return Stream(s.first, compute_rest)
+
 
 if __name__ == "__main__":
     import sys

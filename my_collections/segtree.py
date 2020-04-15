@@ -1,5 +1,3 @@
-
-
 class SegmentTree:
 
     def __init__(self, items, interval_info, init_val=0):
@@ -51,7 +49,8 @@ class SegmentTree:
             right //= 2
         return ans
 
-    def print(self):
+    def show(self):
+        from math import log2
         i = 1
         while i <= self.offset:
             print(*self.items[i:2*i])
