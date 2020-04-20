@@ -1,22 +1,23 @@
 class SegmentTree:
 
-    def __init__(self, items, interval_info, init_val=0):
+    def __init__(self, items, interval_info=min):
         # assert callable(interval_info)
 
-        raw_len, n = len(items), 1
-        while n < raw_len:
+        raw_size, n = len(items), 1
+        while n < raw_size:
             n *= 2
 
-        items = [0]*n + items + [0]*(n-raw_len)
+        items = [0]*n + items + [0]*(n-raw_size)
         for i in range(n)[::-1]:
             items[i] = interval_info(items[2*i], items[2*i+1])
 
         self.interval_info = interval_info
-        self.items, self.offset = items, n
-        self.raw_len = raw_len
+        self.items = items
+        self.size = raw_size
+        self.offset = n
 
     def update(self, i, val):
-        assert 0 <= i < self.raw_len
+        assert 0 <= i < self.size
         i = self.offset + i
         self.items[i] = val
 
@@ -29,12 +30,13 @@ class SegmentTree:
         if not inclusive:
             right -= 1
 
-        assert 0 <= left <= right < self.raw_len
+        assert 0 <= left <= right < self.size
 
-        left, right = left + self.offset, right + self.offset
         func, items = self.interval_info, self.items
+        left += self.offset
+        right += self.offset
 
-        # as func has two argument, add left fist
+        # as func has two argument, add left first
         ans = self.items[left]
         left += 1
 

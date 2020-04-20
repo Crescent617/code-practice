@@ -1,4 +1,6 @@
-.cree/
+contest/
+practice/
+.vscode/
 .mypy_cache
 *.trace
 *.raw

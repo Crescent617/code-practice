@@ -1,4 +1,5 @@
 from collections import Counter
+from functools import lru_cache
 
 MOD = 10**9 + 7
 
@@ -22,7 +23,27 @@ def twos_in_factorial(n):
     return n - bin(n).count('1')
 
 
-def factorize(x):
+N = 10**6
+factor = list(range(N+1))
+for p in range(2, N+1):
+    if p*p > N:
+        break
+    if factor[p] == p:
+        for i in range(p*p, N+1, p):
+            factor[i] = p
+
+def factorize(x) -> list:
+    res = []
+    while x != 1:
+        cnt = 0
+        p = factor[x]
+        while factor[x] == p:
+            x //= p
+            cnt += 1
+        res.append((p, cnt))
+    return res
+
+def factorize1(x):
     assert x > 0 and isinstance(x, int)
     res = Counter()
     _x, k = x, 2

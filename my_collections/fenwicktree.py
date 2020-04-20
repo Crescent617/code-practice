@@ -23,5 +23,6 @@ class FenwickTree:
             i -= i & -i
         return res
     
-    def print(self):
-        print(self.arr)
+    def __repr__(self):
+        return self.arr.__repr__()
+        
