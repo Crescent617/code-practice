@@ -22,7 +22,7 @@ class Solution:
                     ans = op(a, b)
                     nxt_expr = f'{expr} -> {a} {symbols[idx]} {b} = {ans}'
                     done, path = dfs(nums[:i] + (ans,) + nums[i:], nxt_expr)
-                    if done: 
+                    if done:
                         return done, path
             return False, ''
 
