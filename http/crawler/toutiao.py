@@ -20,9 +20,6 @@ class MyCrawler:
     def set_headers(self) -> dict:
         with open('./headers.json') as f:
             headers = json.load(f)
-        # data = {'keyword': self.kw}
-        # url = 'https://www.toutiao.com/search/?'
-        # headers['referer'] = urljoin(url, urlencode(data))
         return headers
 
     def set_params(self, page) -> dict:

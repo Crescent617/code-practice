@@ -5,6 +5,10 @@ practice/
 *.trace
 *.raw
 *.net
+*.exe
+*.out
+
+node_modules
 
 
 # Byte-compiled / optimized / DLL files
