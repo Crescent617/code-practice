@@ -1,3 +1,6 @@
+from array import array
+
+
 class Bitset:
 
     def __init__(self, n, unit=8):
