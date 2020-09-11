@@ -1,25 +1,9 @@
-class Solution:
-    def jobScheduling(
-        self, startTime: List[int], endTime: List[int], profit: List[int]
-    ) -> int:
+import numpy as np
 
-        n = len(startTime)
-        startTime, endTime, profit = zip(sorted(zip(startTime, endTime, profit)))
+def _sum_log(n):
+	if n == 0:
+		return 0
+	return np.sum(np.log(np.arange(1, n+1)))
 
-        pres = [-1] * n
-        events: list = [(t, 1, i) for i, t in enumerate(startTime)] + [
-            (t, 0, i) for i, t in enumerate(endTime)
-        ]
-        events.sort()
-        pre = -1
-        for _, isStart, i in events:
-            if not isStart:
-                pre = i
-            else:
-                pres[i] = pre
-
-        dp = [0] * n
-        for i in range(n):
-            dp[i] = max(dp[i-1], dp[pres[i]] + profit[i])
-        return dp[-1]
+sum_log = np.frompyfunc(_sum_log, 1, 1)
 
