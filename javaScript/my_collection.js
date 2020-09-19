@@ -1,57 +1,59 @@
-class PriorityQueue {
-    #data = []
 
+class PriorityQueue {
     constructor(func) {
         this._compare = typeof func == "function" ? func : (a, b) => a > b
+        this.data = [null]
         Object.freeze(this)
     }
 
     get length() {
-        return this.#data.length
+        return this.data.length - 1
     }
 
     [Symbol.iterator]() {
-        return this.#data[Symbol.iterator]()
+        let it = this.data[Symbol.iterator]()
+        it.next()
+        return it
     }
 
     push(item) {
-        this.#data.push(item)
-        this.shiftUp(this.#data.length - 1)
+        this.data.push(item)
+        this.shiftUp(this.data.length - 1)
     }
 
     top() {
-        return this.#data[0]
+        return this.data[1]
     }
 
     pop() {
-        let val = this.#data[0]
-        this.#data[0] = this.#data[this.#data.length - 1]
-        this.#data.pop()
-        this.shiftDown(0)
+        let val = this.data[1]
+        this.data[1] = this.data[this.data.length - 1]
+        this.data.pop()
+        this.shiftDown(1)
         return val
     }
 
     shiftUp(childIdx) {
-        if (childIdx <= 0) return
-        let parIdx = Math.floor((childIdx - 1) / 2)
+        if (childIdx <= 1) return
+        let parIdx = childIdx >> 1
         this._shift(childIdx, parIdx, () => this.shiftUp(parIdx))
     }
 
     _shift(childIdx, parIdx, callback) {
-        let child = this.#data[childIdx],
-            par = this.#data[parIdx]
-        if (this._compare(par, child)) {
-            ;[this.#data[childIdx], this.#data[parIdx]] = [par, child]
+        let child = this.data[childIdx],
+            par = this.data[parIdx]
+        if (this._compare(child, par)) {
+            this.data[childIdx] = par
+            this.data[parIdx] = child
             callback()
         }
     }
 
     shiftDown(parIdx) {
-        if (parIdx >= this.length) return
-        let childIndices = [parIdx * 2 + 1, parIdx * 2 + 2]
-        for (const childIdx of childIndices.filter(
-            (v) => v < this.#data.length
-        )) {
+        let n = this.data.length
+        if (parIdx >= n) return
+        let childIndices = [parIdx * 2, parIdx * 2 + 1].filter((v) => v < n)
+        for (const childIdx of childIndices) {
             this._shift(childIdx, parIdx, () => this.shiftDown(childIdx))
         }
     }
@@ -162,6 +164,46 @@ class LFUCache {
     }
 }
 
+class SegmentTree {
+    constructor(_n) {
+        let n = 1
+        while (n < _n) {
+            n <<= 1
+        }
+        this.arr = new Array(2 * n).fill(0)
+        this.offset = n
+        // this.func = func? func :
+    }
+
+    update(i, diff = 1) {
+        i += this.offset
+        while (i > 0) {
+            this.arr[i] += diff
+            i >>= 1
+        }
+    }
+
+    query(i, j) {
+        i += this.offset
+        j += this.offset
+        let ans = 0
+        while (i < j) {
+            if (i & 1) {
+                ans += this.arr[i]
+                i++
+            }
+            if ((j & 1) == 0) {
+                ans += this.arr[j]
+                j--
+            }
+            i >>= 1
+            j >>= 1
+        }
+        if (i == j) ans += this.arr[i]
+        return ans
+    }
+}
+
 /**
  * Your LFUCache object will be instantiated and called as such:
  * var obj = new LFUCache(capacity)
@@ -169,7 +211,7 @@ class LFUCache {
  * obj.put(key,value)
  */
 
-let _need_export = [PriorityQueue, LFUCache]
+let _need_export = [PriorityQueue, LFUCache, SegmentTree]
 for (const item of _need_export) {
     module.exports[item.name] = item
 }

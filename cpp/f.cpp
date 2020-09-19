@@ -1,6 +1,8 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #define MAX 1000000009
 #define For(i, a, b) for (ll i = (a); i < (b); i++)
@@ -59,19 +61,44 @@ void print(T head, Args... rest) {
     print(rest...);
 }
 
+template <class T>
+struct PairHash {
+    int operator()(pair<T, T> p) {
+        return hash<T>(p.first) ^ (hash<T>(p.second << 1));
+    }
+};
+
+template <class T = int>
+struct Pair {
+    T first;
+    T second;
+    bool operator==(const Pair<T> &other) const {
+        return other.first == first && other.second == second;
+    }
+};
+
+namespace std {
+template <typename T>
+struct hash<Pair<T>> {
+    std::size_t operator()(const Pair<T> &p) const {
+        auto h = std::hash<T>();
+        return h(p.first) ^ (h(p.second) << 1);
+    }
+};
+}  // namespace std
+
+template<typename T, template<class U> typename Container>
+class XCls
+{
+    private:
+        Container<T> c;
+};
+
+
 // Not Original author
 int main() {
-    auto tr = make_unique<TreeNode>(10);
-    char buffer[200], s[] = "computer", c = 'l';
-    int i = 35, j;
-    float fp = 1.7320534;
-    // 格式化并打印各种数据到buffer
-    j = sprintf(buffer, "   String:    %s\n", s);        // C4996
-    j += sprintf(buffer + j, "   Character: %c\n", c);   // C4996
-    j += sprintf(buffer + j, "   Integer:   %d\n", i);   // C4996
-    j += sprintf(buffer + j, "   Real:      %f\n", fp);  // C4996
+    string s = "abcdefg";
+    vector<int> vec = {1, 2, 3, 4, 5};
+    cout << s.substr(0, 2) << ' ';
 
-    printf("Output:\n%s\ncharacter count = %d\n", buffer, j);
-    string str = "fdsfas";
-    return 0;
 }
