@@ -1,3 +1,5 @@
+#include <bits/stdc++.h>
+
 #include <iostream>
 #include <memory>
 #include <string>
@@ -52,7 +54,7 @@ struct Sum<Last> {
     enum { value = sizeof(Last) };
 };
 
-void print() { cout << "empty" << endl; }
+void print() { cout << '\n'; }
 
 //展开函数
 template <class T, class... Args>
@@ -87,18 +89,32 @@ struct hash<Pair<T>> {
 };
 }  // namespace std
 
-template<typename T, template<class U> typename Container>
-class XCls
-{
-    private:
-        Container<T> c;
+template <typename T, template <class U> typename Container>
+class XCls {
+   private:
+    Container<T> c;
 };
-
 
 // Not Original author
 int main() {
     string s = "abcdefg";
     vector<int> vec = {1, 2, 3, 4, 5};
     cout << s.substr(0, 2) << ' ';
+    vec.erase(vec.begin() + 1);
+    set<int> ss;
+    unordered_set<int> sss;
+    using pr = pair<const int, int>;
+    map<int, int> m;
+    using m_it = map<int, int>::iterator;
 
+    for (size_t i = 0; i < 10; i++) {
+        m.insert({i, 100 - i});
+    }
+
+
+    // sort(m.begin(), m.end(),
+    //      [](m_it &p1, m_it &p2) { return (*p1).second > (*p2).second; });
+    for (auto p : m) {
+        print(p.first, p.second);
+    }
 }

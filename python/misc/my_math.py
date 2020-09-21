@@ -5,11 +5,11 @@ from functools import lru_cache
 def nCr_factory(limit, mod):
     """ return a combinatorial number operator with upper bound """
 
-    fact = [1] * (10**6 + 1)
+    fact = [1] * (limit + 1)
     for i in range(1, len(fact)):
         fact[i] = i * fact[i-1] % mod
 
-    ifact = [1] * (10**6 + 1)
+    ifact = [1] * (limit + 1)
     ifact[-1] = pow(fact[-1], mod-2, mod)
 
     for i in range(1, len(fact)-1)[::-1]:
