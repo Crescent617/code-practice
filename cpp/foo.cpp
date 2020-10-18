@@ -1,31 +1,6 @@
 #include <bits/stdc++.h>
 
-#include <iostream>
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <vector>
-
-#define MAX 1000000009
-#define For(i, a, b) for (ll i = (a); i < (b); i++)
-#define ll long long
-#define x first
-#define y second
 using namespace std;
-
-template <class F>
-struct y_combinator {
-    F f;
-    template <class... Args>
-    auto operator()(Args &&... args) const {
-        return f(*this, std::forward<Args>(args)...);
-    }
-};
-
-template <class F>
-inline auto Y(F &&f) {
-    return y_combinator<F>{std::forward<F>(f)};
-}
 
 struct TreeNode {
     int val;
@@ -43,16 +18,6 @@ T sum(Container<T> items) {
     }
     return res;
 }
-
-template <typename First, typename... Rest>
-struct Sum {
-    enum { value = Sum<First>::value + Sum<Rest...>::value };
-};
-
-template <typename Last>
-struct Sum<Last> {
-    enum { value = sizeof(Last) };
-};
 
 void print() { cout << '\n'; }
 
@@ -89,32 +54,46 @@ struct hash<Pair<T>> {
 };
 }  // namespace std
 
-template <typename T, template <class U> typename Container>
-class XCls {
-   private:
-    Container<T> c;
+struct Foo {
+    char a;
+    int b;
+} foo;
+
+class Shape {
+   public:
+    int id;
 };
+class Dot : public Shape {};
+class Circle : public Dot {};
+
+class Exporter {
+   public:
+    void exp(const Shape &s) { print("Shape"); };
+    void exp(const Dot &d) { print("Dot"); };
+    void exp(const Circle &c) { print("Circle"); };
+};
+
+class App {
+   public:
+    void export_(const Shape &s) {
+        auto e = make_unique<Exporter>();
+        e->exp(s);
+    }
+};
+
+enum Week { Sun = 7, Mon = 1, Tue, Wed, Thu, Fri, Sat };
+
+void printWeek(Week w) { print(w); }
 
 // Not Original author
 int main() {
-    string s = "abcdefg";
-    vector<int> vec = {1, 2, 3, 4, 5};
-    cout << s.substr(0, 2) << ' ';
-    vec.erase(vec.begin() + 1);
-    set<int> ss;
-    unordered_set<int> sss;
-    using pr = pair<const int, int>;
-    map<int, int> m;
-    using m_it = map<int, int>::iterator;
+    // char s1[] = "hhhhhhhhhhhhhhhhhhhhhhhhhhhhh";
+    // auto s2 = String(s1);
+    // print("size:", sizeof(foo), sizeof(foo.a), sizeof(foo.b));
+    auto c = Circle();
+    auto app = App();
+    app.export_(c);
 
-    for (size_t i = 0; i < 10; i++) {
-        m.insert({i, 100 - i});
-    }
-
-
-    // sort(m.begin(), m.end(),
-    //      [](m_it &p1, m_it &p2) { return (*p1).second > (*p2).second; });
-    for (auto p : m) {
-        print(p.first, p.second);
-    }
+    printWeek(Week::Tue);
+    print(sum(array<int>{1,23,4}));
 }

@@ -1,14 +1,17 @@
-from heapq import heappop, heappush
 class Solution:
-    def minRefuelStops(self, target: int, startFuel: int, stations: List[List[int]]) -> int:
-        furthest = startFuel
-        cnt = 0
-        pq = [0]
-        while furthest < target and pq:
-            while stations and furthest >= stations[0][0]:
-                heappush(pq, -stations.pop(0)[1])
-            furthest -= heappop(pq)
-        return furthest >= target
+    def arrayPairSum(self, nums: List[int]) -> int:
+        from collections import defaultdict
+
+        def radixSort(nums, base):
+            if not base:
+                return nums
+            tmp = defaultdict(list)
+            for num in nums:
+                tmp[num//base].append(num)
+            res = []
+            for x in range(10):
+                res.extend(radixSort(tmp[x], base//10))
+            return res
 
 
 

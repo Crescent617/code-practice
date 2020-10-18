@@ -1,27 +1,11 @@
-const { run } = require("jest")
+const { Console } = require("console")
 const R = require("ramda")
 
-const xyzLens = R.lensProp("x.y.z")
-let obj = {}
-R.set(xyzLens, 111, obj)
-console.log(obj)
+let a = R.when(R.lt(R.__, 100), R.always(16))(99)
+console.log(a)
 
-const sortByFirstItem = R.sortBy(R.prop(0));
-const pairs = [[-1, 1], [-2, 2], [-3, 3]];
-sortByFirstItem(pairs); //=> [[-3, 3], [-2, 2], [-1, 1]]
+let e = document.createElement("a")
+e.addEventListener("input", (e) => {
+    e.preventDefault()
+})
 
-const sortByNameCaseInsensitive = R.sortBy(R.compose(R.toLower, R.prop('name')));
-const alice = {
-  name: 'ALICE',
-  age: 101
-};
-const bob = {
-  name: 'Bob',
-  age: -10
-};
-const clara = {
-  name: 'clara',
-  age: 314.159
-};
-const people = [clara, bob, alice];
-R.compose(console.log, sortByNameCaseInsensitive)(people); //=> [alice, bob, clara])
