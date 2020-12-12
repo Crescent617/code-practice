@@ -2,12 +2,12 @@ from collections import defaultdict
 from itertools import takewhile
 from typing import List
 
-
 def Trie():
     return defaultdict(Trie)
 
 
 class Solution:
+
     def suggestedProducts(
         self, products: List[str], searchWord: str
     ) -> List[List[str]]:

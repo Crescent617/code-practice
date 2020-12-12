@@ -1,59 +1,45 @@
-struct Solution;
-use std::collections::{HashMap, VecDeque};
+mod collections;
 
-impl Solution {
-    pub fn ladder_length(begin_word: String, end_word: String, word_list: Vec<String>) -> i32 {
-        if !word_list.contains(&end_word) {
-            return 0;
-        }
-        let mut word_map: HashMap<_, _> = word_list
-            .iter()
-            .map(|x| (x.as_bytes().to_vec(), 0))
-            .collect();
+use collections::LeftistTree;
+use rand::prelude::*;
+use std::{collections::BinaryHeap, time};
 
-        word_map.insert(begin_word.as_bytes().to_vec(), 1);
-        word_map.insert(end_word.as_bytes().to_vec(), 2);
+fn main() {
+    let n = 10000;
+    let mut heap = LeftistTree::new();
+    let mut rng = rand::thread_rng();
 
-        let mut f = VecDeque::from(vec![begin_word.as_bytes().to_vec()]);
-        let mut b = VecDeque::from(vec![end_word.as_bytes().to_vec()]);
-
-        let mut cnt = 1;
-        let mut dir = 1;
-
-        while !f.is_empty() {
-            cnt += 1;
-            if f.len() > b.len() {
-                std::mem::swap(&mut f, &mut b);
-                dir ^= 0b11;
-            }
-
-            for _ in 0..f.len() {
-                let mut w = f.pop_front().unwrap();
-                for i in 0..w.len() {
-                    let old = w[i];
-
-                    for c in b'a'..=b'z' {
-                        w[i] = c;
-                        if let Some(p) = word_map.get_mut(&w) {
-                            if *p & dir != 0 {
-                                continue;
-                            }
-                            *p |= dir;
-                            if *p == 0b11 {
-                                return cnt;
-                            }
-                            f.push_back(w.clone());
-                        }
-                    }
-
-                    w[i] = old;
-                }
-            }
-            // println!("{:?}", seen);
-        }
-        0
+    let t = time::Instant::now();
+    for _ in 0..n {
+        heap.push(rng.gen_range(i32::MIN, i32::MAX));
     }
+    for _ in 0..n {
+        heap.pop();
+    }
+    println!("LTree use: {:?}", t.elapsed());
+
+    let mut heap = BinaryHeap::new();
+
+    let t = time::Instant::now();
+    for _ in (0..n).rev() {
+        heap.push(rng.gen_range(i32::MIN, i32::MAX));
+    }
+    for _ in 0..n {
+        heap.pop();
+    }
+    println!("BHeap use: {:?}", t.elapsed());
+
+    println!("test begin");
+    let mut h1 = LeftistTree::new();
+    let mut h2 = BinaryHeap::new();
+
+    for _ in 0..n {
+        let r = rng.gen_range(i32::MIN, i32::MAX);
+        h1.push(r);
+        h2.push(r);
+    }
+    for _ in 0..n {
+        assert_eq!(h1.pop(), h2.pop());
+    }
+    println!("success");
 }
-
-
-fn main() {}

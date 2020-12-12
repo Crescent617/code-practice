@@ -83,13 +83,13 @@ class SegmentTreeWithLazyPropagation:
 
     def update_range(self, left, right, diff):
         def _rupdate(cur, lo, hi):
-            lenth = hi - lo + 1
+            length = hi - lo + 1
 
             # add lazy first
             if lazy[cur]:
                 lz, pre, pre2 = lazy[cur], sums[cur], sums2[cur]
-                sums[cur] = (pre + lenth * lz) % MOD
-                sums2[cur] = (pre2 + 2 * lz * pre + lz ** 2 * lenth) % MOD
+                sums[cur] = (pre + length * lz) % MOD
+                sums2[cur] = (pre2 + 2 * lz * pre + lz ** 2 * length) % MOD
                 # propagate to its children
                 if lo != hi:
                     lazy[cur * 2] += lz
@@ -100,8 +100,8 @@ class SegmentTreeWithLazyPropagation:
             # if completely inside, just do it
             if left <= lo and hi <= right:
                 pre, pre2 = sums[cur], sums2[cur]
-                sums[cur] = (pre + lenth * diff) % MOD
-                sums2[cur] = (pre2 + 2 * diff * pre + diff ** 2 * lenth) % MOD
+                sums[cur] = (pre + length * diff) % MOD
+                sums2[cur] = (pre2 + 2 * diff * pre + diff ** 2 * length) % MOD
                 if lo != hi:
                     lazy[cur * 2] += diff
                     lazy[cur * 2 + 1] += diff

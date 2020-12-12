@@ -81,31 +81,6 @@ class App {
     }
 };
 
-class Solution {
-   public:
-    int shortestSubarray(vector<int> &A, int K) {
-        auto check = [&](int len) -> bool {
-            int tmp = 0;
-            for (int i = 0; i < A.size(); i++) {
-                tmp += A[i];
-                if (i >= len) tmp -= A[i - len];
-                if (tmp >= K) return true;
-            }
-            return false;
-        };
-
-        int l = 1, r = A.size();
-        while (l < r - 1) {
-            int m = (r + l) / 2;
-            if (check(m))
-                r = m;
-            else
-                l = m;
-        }
-        cout << check(14);
-        return check(r) ? r : -1;
-    }
-};
 // Definition for Employee.
 class Employee {
    public:
@@ -113,7 +88,6 @@ class Employee {
     int importance;
     vector<int> subordinates;
 };
-
 
 enum IP { V4 };
 enum Week { Sun = 7, Mon = 1, Tue, Wed, Thu, Fri, Sat };
@@ -138,8 +112,41 @@ union _XXG_PortRunFLAG {
     ushort Flag;
 } xxg;
 
+// Definition for a Node.
+class Node {
+   public:
+    int val;
+    vector<Node *> children;
+
+    Node() {}
+
+    Node(int _val) { val = _val; }
+
+    Node(int _val, vector<Node *> _children) {
+        val = _val;
+        children = _children;
+    }
+};
+
+class Solution {
+   public:
+    vector<int> postorder(Node *root) {
+        vector<int> res;
+        helper(root, res);
+        return res;
+    }
+
+    void helper(Node *node, vector<int> &res) {
+        if (!node) return;
+        for (auto child : node->children) {
+            helper(child, res);
+        }
+        res.push_back(node->val);
+    }
+};
+
 // Not Original author
 int main() {
-    xxg.Flag = 1;
-    print(xxg.Bbits.Port_SigUdc);
+    vector<int> v[10];
+    // print(v);
 }
