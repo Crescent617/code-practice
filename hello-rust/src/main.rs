@@ -1,10 +1,16 @@
 mod collections;
 
-use collections::LeftistTree;
+use collections::{LeftistTree, SegTree};
 use rand::prelude::*;
-use std::{collections::BinaryHeap, time};
+use std::{
+    collections::{BTreeMap, BinaryHeap, LinkedList},
+    mem, time,
+};
 
 fn main() {
+    // let a = Box::new(1);
+    // let b = Box::leak(a);
+    // let c = NonNull::from(b);
     let n = 10000;
     let mut heap = LeftistTree::new();
     let mut rng = rand::thread_rng();
@@ -29,7 +35,8 @@ fn main() {
     }
     println!("BHeap use: {:?}", t.elapsed());
 
-    println!("test begin");
+    println!(">>> test begin");
+
     let mut h1 = LeftistTree::new();
     let mut h2 = BinaryHeap::new();
 
@@ -40,6 +47,23 @@ fn main() {
     }
     for _ in 0..n {
         assert_eq!(h1.pop(), h2.pop());
+        assert_eq!(h1.len(), h2.len());
     }
-    println!("success");
+
+    let v: Vec<_> = (0..100).collect();
+    let mut seg = SegTree::from(v, Box::new(|&x, &y| x + y));
+    assert_eq!(seg.query(0, 11), 55);
+    assert_eq!(seg.query(0, 100), (0..100).sum());
+
+    seg.update(0, 10);
+    assert_eq!(seg.query(0, 11), 65);
+
+    let v: Vec<_> = (0..100).collect();
+    let mut seg = SegTree::from(v, Box::new(|x: &i32, y: &i32| *x.max(y)));
+
+    seg.update(50, 1);
+    assert_eq!(seg.query(45, 50), 49);
+    assert_eq!(seg.query(45, 200), 99);
+
+    println!(">>> test success");
 }
