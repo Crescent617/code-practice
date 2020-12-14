@@ -1,8 +1,14 @@
+#![allow(dead_code)]
+
 use std::{
-    fmt, mem,
-    ops::{AddAssign, Sub},
+    cell::RefCell,
+    cmp::Ordering,
+    mem,
+    ops::{Add, AddAssign, Sub},
+    ptr, rc, vec,
 };
 
+use rc::Rc;
 
 /////////////////////////////////////////////////////////////////////////
 // Binary Index Tree
@@ -10,15 +16,6 @@ use std::{
 
 // trait BITreeElem = Add + Sub + Default;
 
-/// ```
-/// let mut b = hello_rust::collections::BITree::new(10);
-/// b.update(1, 10);
-/// b.update(2, 1);
-/// b.update(3, 15);
-/// assert_eq!(b.query(2, 3), 1);
-/// b.update(6, 2);
-/// assert_eq!(b.query(3, 7), 17);
-/// ```
 pub struct BITree<T>
 where
     T: AddAssign + Sub<Output = T> + Default + Copy,
@@ -72,16 +69,16 @@ where
 
 #[derive(Debug)]
 struct LTreeNode<T: Ord> {
-    val: T,
+    elem: T,
     left: LTreeLink<T>,
     right: LTreeLink<T>,
     dist: usize,
 }
 
 impl<T: Ord> LTreeNode<T> {
-    fn new(val: T) -> Self {
+    fn new(elem: T) -> Self {
         Self {
-            val,
+            elem,
             left: None,
             right: None,
             dist: 0,
@@ -106,7 +103,7 @@ impl<T: Ord> LeftistTree<T> {
     }
 
     pub fn peek(&self) -> Option<&T> {
-        self.root.as_ref().map(|x| &x.val)
+        self.root.as_ref().map(|x| &x.elem)
     }
 
     pub fn merge(&mut self, other: Self) {
@@ -126,7 +123,7 @@ impl<T: Ord> LeftistTree<T> {
         if a.is_none() || b.is_none() {
             a.or(b)
         } else if let (Some(mut a), Some(mut b)) = (a, b) {
-            if a.val < b.val {
+            if a.elem < b.elem {
                 mem::swap(&mut a, &mut b);
             }
 
@@ -156,11 +153,10 @@ impl<T: Ord> LeftistTree<T> {
         self.root.take().map(|x| {
             self.root = Self::merge_node(x.left, x.right);
             self.size -= 1;
-            x.val
+            x.elem
         })
     }
 }
-
 
 /////////////////////////////////////////////////////////////////////////
 // Segment Tree
@@ -263,5 +259,287 @@ impl<T: Clone> SegTree<T> {
         }
 
         ans.unwrap()
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////
+// Treap
+/////////////////////////////////////////////////////////////////////////
+
+type TreapLink<T> = Option<Rc<RefCell<TreapNode<T>>>>;
+
+struct TreapNode<T: Ord> {
+    elem: T,
+    pri: f32,
+    left: TreapLink<T>,
+    right: TreapLink<T>,
+}
+
+impl<T: Ord> TreapNode<T> {
+    fn new(elem: T) -> Self {
+        Self {
+            elem,
+            pri: rand::random(),
+            left: None,
+            right: None,
+        }
+    }
+
+    fn wrap(self) -> TreapLink<T> {
+        Some(Rc::new(RefCell::new(self)))
+    }
+}
+
+struct Treap<T: Ord> {
+    root: TreapLink<T>,
+}
+
+impl<T: Ord> Treap<T> {
+    pub fn new() -> Self {
+        Self { root: None }
+    }
+
+    pub fn from(v: Vec<T>) -> Self {
+        if v.is_empty() {
+            return Self::new();
+        }
+
+        let mut stk: Vec<Rc<RefCell<TreapNode<T>>>> = vec![];
+
+        for e in v {
+            let nd = TreapNode::new(e);
+            let pri = nd.pri;
+            let node = Rc::new(RefCell::new(nd));
+
+            while let Some(x) = stk.last() {
+                if x.borrow().pri < pri {
+                    node.borrow_mut().left = stk.pop();
+                } else {
+                    break;
+                }
+            }
+
+            if let Some(x) = stk.last() {
+                x.borrow_mut().right = Some(Rc::clone(&node));
+            }
+
+            stk.push(node);
+        }
+
+        Self {
+            root: Some(Rc::clone(&stk[0])),
+        }
+    }
+
+    fn split_node(node: TreapLink<T>, key: &T) -> (TreapLink<T>, TreapLink<T>) {
+        if let Some(nd) = &node {
+            let mut n = nd.borrow_mut();
+            if &n.elem < key {
+                let (lt, ge) = Self::split_node(n.right.take(), &key);
+                n.right = lt;
+                (Some(Rc::clone(nd)), ge)
+            } else {
+                let (lt, ge) = Self::split_node(n.left.take(), &key);
+                n.left = ge;
+                (lt, Some(Rc::clone(nd)))
+            }
+        } else {
+            (None, None)
+        }
+    }
+
+    fn merge_node(node1: TreapLink<T>, node2: TreapLink<T>) -> TreapLink<T> {
+        if let (Some(a), Some(b)) = (&node1, &node2) {
+            if a.borrow().pri > b.borrow().pri {
+                let mut bow_a = a.borrow_mut();
+                bow_a.right = Self::merge_node(bow_a.right.take(), Some(Rc::clone(b)));
+                Some(Rc::clone(a))
+            } else {
+                let mut bow_b = b.borrow_mut();
+                bow_b.left = Self::merge_node(Some(Rc::clone(a)), bow_b.left.take());
+                Some(Rc::clone(b))
+            }
+        } else {
+            node1.or(node2)
+        }
+    }
+
+    pub fn get<'a, 'b>(&'a self, key: &'b T) -> Option<&'b T> {
+        let mut p = self.root.clone();
+        while let Some(r) = p {
+            let b = r.borrow();
+            let cur = &b.elem;
+            match cur.cmp(key) {
+                Ordering::Less => p = b.right.clone(),
+                Ordering::Greater => p = b.left.clone(),
+                Ordering::Equal => return Some(key),
+            }
+        }
+        None
+    }
+
+    pub fn insert(&mut self, elem: T) -> bool {
+        if self.get(&elem).is_some() {
+            return false;
+        }
+        let (mut lt, ge) = Self::split_node(self.root.take(), &elem);
+        lt = Self::merge_node(lt, TreapNode::new(elem).wrap());
+        self.root = Self::merge_node(lt, ge);
+        true
+    }
+}
+
+impl<T: Copy + Ord> Treap<T> {
+    pub fn to_vec(self) -> Vec<T> {
+        let mut res = vec![];
+        Self::_to_vec(self.root, &mut res);
+        res
+    }
+
+    fn _to_vec(node: TreapLink<T>, output: &mut Vec<T>) {
+        if let Some(nd) = node {
+            let mut b = nd.borrow_mut();
+            Self::_to_vec(b.left.take(), output);
+            output.push(b.elem);
+            Self::_to_vec(b.right.take(), output);
+        }
+    }
+}
+
+trait Unit {
+    fn unit() -> Self;
+}
+
+impl<T: Add<Output = T> + Ord + Unit + Clone> Treap<T> {
+    pub fn remove(&mut self, elem: &T) -> bool {
+        if self.get(&elem).is_none() {
+            return false;
+        }
+        let (l, r) = Self::split_node(self.root.take(), elem);
+        let (_, r) = Self::split_node(r, &elem.clone().add(T::unit()));
+        self.root = Self::merge_node(l, r);
+        true
+    }
+}
+
+impl Unit for i32 {
+    fn unit() -> Self {
+        1
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////
+// Test
+/////////////////////////////////////////////////////////////////////////
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::prelude::*;
+    use std::{collections::BinaryHeap, time};
+
+    #[test]
+    fn test_leftist_tree() {
+        let n = 10000;
+        let mut heap = LeftistTree::new();
+        let mut rng = rand::thread_rng();
+
+        let t = time::Instant::now();
+        for _ in 0..n {
+            heap.push(rng.gen_range(i32::MIN, i32::MAX));
+        }
+        for _ in 0..n {
+            heap.pop();
+        }
+        println!("LTree use: {:?}", t.elapsed());
+        let mut heap = BinaryHeap::new();
+
+        let t = time::Instant::now();
+        for _ in (0..n).rev() {
+            heap.push(rng.gen_range(i32::MIN, i32::MAX));
+        }
+        for _ in 0..n {
+            heap.pop();
+        }
+        println!("BHeap use: {:?}", t.elapsed());
+
+        let mut h1 = LeftistTree::new();
+        let mut h2 = BinaryHeap::new();
+
+        for _ in 0..n {
+            let r = rng.gen_range(i32::MIN, i32::MAX);
+            h1.push(r);
+            h2.push(r);
+        }
+        for _ in 0..n {
+            assert_eq!(h1.pop(), h2.pop());
+            assert_eq!(h1.len(), h2.len());
+        }
+    }
+
+    #[test]
+    fn test_segtree() {
+        let v: Vec<_> = (0..100).collect();
+        let mut seg = SegTree::from(v, Box::new(|&x, &y| x + y));
+        assert_eq!(seg.query(0, 11), 55);
+        assert_eq!(seg.query(0, 100), (0..100).sum());
+
+        seg.update(0, 10);
+        assert_eq!(seg.query(0, 11), 65);
+
+        let v: Vec<_> = (0..100).collect();
+        let mut seg = SegTree::from(v, Box::new(|x: &i32, y: &i32| *x.max(y)));
+
+        seg.update(50, 1);
+        assert_eq!(seg.query(45, 50), 49);
+        assert_eq!(seg.query(45, 200), 99);
+    }
+
+    #[test]
+    fn test_bit() {
+        let mut b = BITree::new(10);
+        b.update(1, 10);
+        b.update(2, 1);
+        b.update(3, 15);
+        assert_eq!(b.query(2, 3), 1);
+        b.update(6, 2);
+        assert_eq!(b.query(3, 7), 17);
+    }
+
+    #[test]
+    fn test_treap() {
+        let mut v: Vec<_> = (0..10).collect();
+        let mut t = Treap::new();
+        for i in v.iter().rev() {
+            t.insert(*i);
+        }
+        assert!(t.remove(&0));
+        assert!(t.remove(&5));
+        v.remove(5);
+        v.remove(0);
+        assert_eq!(v, t.to_vec());
+
+        let n = 10000;
+        let mut tr = Treap::new();
+        let mut rng = rand::thread_rng();
+
+        let t = time::Instant::now();
+        for _ in 0..n {
+            tr.insert(rng.gen_range(i32::MIN, i32::MAX));
+        }
+        for _ in 0..n {
+            tr.remove(&rng.gen_range(i32::MIN, i32::MAX));
+        }
+        println!("Treap use: {:?}", t.elapsed());
+        let mut tr = std::collections::BTreeSet::new();
+
+        let t = time::Instant::now();
+        for _ in (0..n).rev() {
+            tr.insert(rng.gen_range(i32::MIN, i32::MAX));
+        }
+        for _ in 0..n {
+            tr.remove(&rng.gen_range(i32::MIN, i32::MAX));
+        }
+        println!("BTree use: {:?}", t.elapsed());
     }
 }

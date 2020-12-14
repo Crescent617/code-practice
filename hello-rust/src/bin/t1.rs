@@ -1,4 +1,4 @@
-use std::{collections::LinkedList, mem, vec};
+use std::collections::{BTreeSet, LinkedList};
 
 #[allow(unused_macros)]
 macro_rules! input {
@@ -40,6 +40,4 @@ macro_rules! map {
 #[derive(Debug)]
 struct Solution;
 
-fn main() {
-
-}
+fn main() {}

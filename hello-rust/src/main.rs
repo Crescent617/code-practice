@@ -1,69 +1,47 @@
-mod collections;
+use hello_rust::ThreadPool;
 
-use collections::{LeftistTree, SegTree};
-use rand::prelude::*;
-use std::{
-    collections::{BTreeMap, BinaryHeap, LinkedList},
-    mem, time,
-};
+use std::fs;
+use std::io::prelude::*;
+use std::net::TcpListener;
+use std::net::TcpStream;
+use std::thread;
+use std::time::Duration;
 
 fn main() {
-    // let a = Box::new(1);
-    // let b = Box::leak(a);
-    // let c = NonNull::from(b);
-    let n = 10000;
-    let mut heap = LeftistTree::new();
-    let mut rng = rand::thread_rng();
+    let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+    let pool = ThreadPool::new(4);
 
-    let t = time::Instant::now();
-    for _ in 0..n {
-        heap.push(rng.gen_range(i32::MIN, i32::MAX));
-    }
-    for _ in 0..n {
-        heap.pop();
-    }
-    println!("LTree use: {:?}", t.elapsed());
+    for stream in listener.incoming().take(2) {
+        let stream = stream.unwrap();
 
-    let mut heap = BinaryHeap::new();
-
-    let t = time::Instant::now();
-    for _ in (0..n).rev() {
-        heap.push(rng.gen_range(i32::MIN, i32::MAX));
-    }
-    for _ in 0..n {
-        heap.pop();
-    }
-    println!("BHeap use: {:?}", t.elapsed());
-
-    println!(">>> test begin");
-
-    let mut h1 = LeftistTree::new();
-    let mut h2 = BinaryHeap::new();
-
-    for _ in 0..n {
-        let r = rng.gen_range(i32::MIN, i32::MAX);
-        h1.push(r);
-        h2.push(r);
-    }
-    for _ in 0..n {
-        assert_eq!(h1.pop(), h2.pop());
-        assert_eq!(h1.len(), h2.len());
+        pool.execute(|| {
+            handle_connection(stream);
+        });
     }
 
-    let v: Vec<_> = (0..100).collect();
-    let mut seg = SegTree::from(v, Box::new(|&x, &y| x + y));
-    assert_eq!(seg.query(0, 11), 55);
-    assert_eq!(seg.query(0, 100), (0..100).sum());
+    println!("Shutting down.");
+}
 
-    seg.update(0, 10);
-    assert_eq!(seg.query(0, 11), 65);
+fn handle_connection(mut stream: TcpStream) {
+    let mut buffer = [0; 512];
+    stream.read(&mut buffer).unwrap();
 
-    let v: Vec<_> = (0..100).collect();
-    let mut seg = SegTree::from(v, Box::new(|x: &i32, y: &i32| *x.max(y)));
+    let get = b"GET / HTTP/1.1\r\n";
+    let sleep = b"GET /sleep HTTP/1.1\r\n";
 
-    seg.update(50, 1);
-    assert_eq!(seg.query(45, 50), 49);
-    assert_eq!(seg.query(45, 200), 99);
+    let (status_line, filename) = if buffer.starts_with(get) {
+        ("HTTP/1.1 200 OK\r\n\r\n", "hello.html")
+    } else if buffer.starts_with(sleep) {
+        thread::sleep(Duration::from_secs(5));
+        ("HTTP/1.1 200 OK\r\n\r\n", "hello.html")
+    } else {
+        ("HTTP/1.1 404 NOT FOUND\r\n\r\n", "404.html")
+    };
 
-    println!(">>> test success");
+    let contents = fs::read_to_string(filename).unwrap();
+
+    let response = format!("{}{}", status_line, contents);
+
+    stream.write(response.as_bytes()).unwrap();
+    stream.flush().unwrap();
 }
