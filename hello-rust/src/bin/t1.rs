@@ -40,4 +40,16 @@ macro_rules! map {
 #[derive(Debug)]
 struct Solution;
 
-fn main() {}
+use std::rc::Rc;
+
+fn main() {
+    let v = vec![0; 2];
+    let x = Rc::new(v);
+    let y = x.clone();
+
+    unsafe {
+        (*(Rc::as_ptr(&x) as *mut Vec<i32>))[0] = 1000;
+    }
+    dbg!(x);
+    // LinkedList;
+}
