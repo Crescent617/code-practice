@@ -1,20 +1,22 @@
 use ptr::NonNull;
 use std::{cmp::Ordering, marker::PhantomData, ops::Add, ptr};
 
-type Link<T> = Option<NonNull<Node<T>>>;
+type Link<K, V> = Option<NonNull<Node<K, V>>>;
 
 // todo: add size
-struct Node<T> {
-    elem: T,
+struct Node<K, V> {
+    key: K,
+    val: V,
     pri: f32,
-    left: Link<T>,
-    right: Link<T>,
+    left: Link<K, V>,
+    right: Link<K, V>,
 }
 
-impl<T> Node<T> {
-    fn new(elem: T) -> Self {
+impl<K, V> Node<K, V> {
+    fn new(key: K, val: V) -> Self {
         Self {
-            elem,
+            key,
+            val,
             pri: rand::random(),
             left: None,
             right: None,
@@ -27,16 +29,48 @@ impl<T> Node<T> {
     }
 }
 
-pub struct Treap<T> {
-    root: Link<T>,
+pub struct TreapSet<T> {
+    map: TreapMap<T, ()>,
 }
 
-impl<T> Treap<T> {
+impl<T: Ord> TreapSet<T> {
+    pub fn new() -> Self {
+        Self {
+            map: TreapMap::new(),
+        }
+    }
+
+    pub fn from(v: Vec<T>) -> Self {
+        Self {
+            map: TreapMap::from(v.into_iter().map(|x| (x, ())).collect()),
+        }
+    }
+
+    pub fn insert(&mut self, elem: T) {
+        self.map.insert(elem, ());
+    }
+
+    pub fn get(&self, elem: &T) -> Option<&()> {
+        self.map.get(elem)
+    }
+}
+
+impl<T: Add<Output = T> + Ord + Unit + Clone> TreapSet<T> {
+    pub fn remove(&mut self, elem: &T) -> bool {
+        self.map.remove(elem)
+    }
+}
+
+pub struct TreapMap<K, V> {
+    root: Link<K, V>,
+}
+
+impl<K, V> TreapMap<K, V> {
     pub fn new() -> Self {
         Self { root: None }
     }
 
-    pub fn iter(&self) -> Iter<T> {
+    pub fn iter(&self) -> Iter<K, V> {
         Iter {
             stack: vec![],
             pointer: self.root,
@@ -44,7 +78,7 @@ impl<T> Treap<T> {
         }
     }
 
-    pub fn into_iter(mut self) -> IntoIter<T> {
+    pub fn into_iter(mut self) -> IntoIter<K, V> {
         let mut stk = vec![];
         self.root.take().map(|x| stk.push(x)); // must take out
 
@@ -55,16 +89,16 @@ impl<T> Treap<T> {
     }
 }
 
-impl<T: Ord> Treap<T> {
-    pub fn from(v: Vec<T>) -> Self {
+impl<K: Ord, V> TreapMap<K, V> {
+    pub fn from(v: Vec<(K, V)>) -> Self {
         if v.is_empty() {
             return Self::new();
         }
 
-        let mut stk: Vec<NonNull<Node<T>>> = vec![];
+        let mut stk: Vec<NonNull<Node<K, V>>> = vec![];
 
-        for e in v {
-            let nd = Box::new(Node::new(e));
+        for (k, v) in v {
+            let nd = Box::new(Node::new(k, v));
             let pri = nd.pri;
             let mut node = NonNull::from(Box::leak(nd));
 
@@ -76,12 +110,10 @@ impl<T: Ord> Treap<T> {
                         break;
                     }
                 }
-
                 if let Some(x) = stk.last_mut() {
                     x.as_mut().right = Some(node);
                 }
             }
-
             stk.push(node);
         }
 
@@ -90,10 +122,10 @@ impl<T: Ord> Treap<T> {
         }
     }
 
-    fn split_node(mut node: Link<T>, key: &T) -> (Link<T>, Link<T>) {
+    fn split_node(mut node: Link<K, V>, key: &K) -> (Link<K, V>, Link<K, V>) {
         if let Some(nd) = &mut node {
             let mut n = unsafe { nd.as_mut() };
-            if &n.elem < key {
+            if &n.key < key {
                 let (lt, ge) = Self::split_node(n.right.take(), &key);
                 n.right = lt;
                 (node, ge)
@@ -107,7 +139,7 @@ impl<T: Ord> Treap<T> {
         }
     }
 
-    fn merge_node(mut node1: Link<T>, mut node2: Link<T>) -> Link<T> {
+    fn merge_node(mut node1: Link<K, V>, mut node2: Link<K, V>) -> Link<K, V> {
         if let (Some(a), Some(b)) = (&mut node1, &mut node2) {
             unsafe {
                 if a.as_ref().pri > b.as_ref().pri {
@@ -125,32 +157,32 @@ impl<T: Ord> Treap<T> {
         }
     }
 
-    pub fn get<'a, 'b>(&'a self, key: &'b T) -> Option<&'b T> {
+    pub fn get<'a, 'b>(&'a self, key: &'b K) -> Option<&'a V> {
         let mut p = self.root.as_ref();
         while let Some(r) = p {
             let b = unsafe { r.as_ref() };
-            let cur = &b.elem;
+            let cur = &b.key;
             match cur.cmp(key) {
                 Ordering::Less => p = b.right.as_ref(),
                 Ordering::Greater => p = b.left.as_ref(),
-                Ordering::Equal => return Some(key),
+                Ordering::Equal => return Some(&b.val),
             }
         }
         None
     }
 
-    pub fn insert(&mut self, elem: T) -> bool {
-        if self.get(&elem).is_some() {
+    pub fn insert(&mut self, key: K, val: V) -> bool {
+        if self.get(&key).is_some() {
             return false;
         }
-        let (mut lt, ge) = Self::split_node(self.root.take(), &elem);
-        lt = Self::merge_node(lt, Node::new(elem).wrap());
+        let (mut lt, ge) = Self::split_node(self.root.take(), &key);
+        lt = Self::merge_node(lt, Node::new(key, val).wrap());
         self.root = Self::merge_node(lt, ge);
         true
     }
 }
 
-impl<T> Drop for Treap<T> {
+impl<K, V> Drop for TreapMap<K, V> {
     fn drop(&mut self) {
         let mut s = vec![];
         self.root.map(|x| s.push(x));
@@ -163,37 +195,37 @@ impl<T> Drop for Treap<T> {
     }
 }
 
-impl<T> IntoIterator for Treap<T> {
-    type Item = T;
-    type IntoIter = IntoIter<T>;
+impl<K, V> IntoIterator for TreapMap<K, V> {
+    type Item = (K, V);
+    type IntoIter = IntoIter<K, V>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.into_iter()
     }
 }
 
-impl<'a, T> IntoIterator for &'a Treap<T> {
-    type Item = &'a T;
-    type IntoIter = Iter<'a, T>;
+impl<'a, K, V> IntoIterator for &'a TreapMap<K, V> {
+    type Item = (&'a K, &'a V);
+    type IntoIter = Iter<'a, K, V>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
 }
 
-pub struct Iter<'a, T> {
-    pointer: Link<T>,
-    stack: Vec<NonNull<Node<T>>>,
-    _marker: PhantomData<&'a Node<T>>,
+pub struct Iter<'a, K, V> {
+    pointer: Link<K, V>,
+    stack: Vec<NonNull<Node<K, V>>>,
+    _marker: PhantomData<&'a Node<K, V>>,
 }
 
-pub struct IntoIter<T> {
-    stack: Vec<NonNull<Node<T>>>,
-    _marker: PhantomData<Box<Node<T>>>,
+pub struct IntoIter<K, V> {
+    stack: Vec<NonNull<Node<K, V>>>,
+    _marker: PhantomData<Box<Node<K, V>>>,
 }
 
-impl<'a, T> Iterator for Iter<'a, T> {
-    type Item = &'a T;
+impl<'a, K, V> Iterator for Iter<'a, K, V> {
+    type Item = (&'a K, &'a V);
 
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(x) = self.pointer {
@@ -207,7 +239,7 @@ impl<'a, T> Iterator for Iter<'a, T> {
             let p = last.as_ptr();
             unsafe {
                 self.pointer = last.as_ref().right;
-                Some(&(*p).elem)
+                Some((&(*p).key, &(*p).val))
             }
         } else {
             None
@@ -215,8 +247,8 @@ impl<'a, T> Iterator for Iter<'a, T> {
     }
 }
 
-impl<T> Iterator for IntoIter<T> {
-    type Item = T;
+impl<K, V> Iterator for IntoIter<K, V> {
+    type Item = (K, V);
 
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(x) = self.stack.last_mut() {
@@ -231,7 +263,7 @@ impl<T> Iterator for IntoIter<T> {
         if let Some(last) = self.stack.pop() {
             let mut b = unsafe { Box::from_raw(last.as_ptr()) };
             b.right.take().map(|x| self.stack.push(x));
-            Some(b.elem)
+            Some((b.key, b.val))
         } else {
             None
         }
@@ -242,13 +274,13 @@ pub trait Unit {
     fn unit() -> Self;
 }
 
-impl<T: Add<Output = T> + Ord + Unit + Clone> Treap<T> {
-    pub fn remove(&mut self, elem: &T) -> bool {
-        if self.get(&elem).is_none() {
+impl<K: Add<Output = K> + Ord + Unit + Clone, V> TreapMap<K, V> {
+    pub fn remove(&mut self, key: &K) -> bool {
+        if self.get(&key).is_none() {
             return false;
         }
-        let (l, r) = Self::split_node(self.root.take(), elem);
-        let (_, r) = Self::split_node(r, &elem.clone().add(T::unit()));
+        let (l, r) = Self::split_node(self.root.take(), key);
+        let (_, r) = Self::split_node(r, &key.clone().add(K::unit()));
         self.root = Self::merge_node(l, r);
         true
     }

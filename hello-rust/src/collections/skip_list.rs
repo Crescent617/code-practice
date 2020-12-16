@@ -1,13 +1,12 @@
 #![allow(dead_code)]
 
-use std::ptr::NonNull;
+use fmt::Display;
+use std::{marker::PhantomData, ptr::NonNull};
 use std::{cmp::Ordering, fmt, fmt::Debug};
 use std::{
     fmt::Formatter,
     mem::{size_of, size_of_val},
 };
-
-use fmt::Display;
 
 const P: f32 = 0.3;
 const MAX_LEVEL: usize = 32;
@@ -234,3 +233,51 @@ impl<T: Display> fmt::Display for SkipListSet<T> {
         write!(f, "{}", self.map)
     }
 }
+
+pub struct Iter<'a, K, V> {
+    pointer: Link<K, V>,
+    _marker: PhantomData<&'a Node<K, V>>,
+}
+
+pub struct IntoIter<K, V> {
+    pointer: Link<K, V>,
+}
+
+impl<K, V> Iterator for IntoIter<K, V> {
+    type Item = (K, V);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.pointer.map(|x| unsafe {
+            let b = Box::from_raw(x.as_ptr());
+            let output = (b.key, b.val);
+            self.pointer = b.nexts[0];
+            output
+        })
+    }
+}
+
+impl<'a, K, V> Iterator for Iter<'a, K, V> {
+    type Item = (&'a K, &'a V);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.pointer.map(|x| unsafe {
+            let b = x.as_ptr();
+            let output = (&(*b).key, &(*b).val);
+            self.pointer = (*b).nexts[0];
+            output
+        })
+    }
+}
+
+
+impl<K, V> IntoIterator for SkipListMap<K, V> {
+    type Item = (K, V);
+    type IntoIter = IntoIter<K, V>;
+
+    fn into_iter(mut self) -> Self::IntoIter {
+        IntoIter {
+            pointer: self.heads[0].take(),
+        }
+    }
+}
+

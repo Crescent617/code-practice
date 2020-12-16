@@ -10,7 +10,7 @@ use bitree::BITree;
 use leftist_tree::LeftistTree;
 use segment_tree::{PstSegTree, SegTree};
 use skip_list::SkipListSet;
-use treap::Treap;
+use treap::TreapMap;
 
 #[allow(unused_macros)]
 macro_rules! timeit {
@@ -39,6 +39,7 @@ mod tests {
     use super::*;
     use rand::prelude::*;
     use skip_list::SkipListMap;
+    use treap::TreapSet;
     use std::{
         collections::{BTreeSet, BinaryHeap},
         time,
@@ -116,11 +117,11 @@ mod tests {
 
     #[test]
     fn test_treap() {
-        let mut v: Vec<_> = (0..100).collect();
-        let mut t = Treap::new();
+        let mut v: Vec<_> = (0..100).zip(0..100).collect();
+        let mut t = TreapMap::new();
 
-        for i in v.iter().rev() {
-            t.insert(*i);
+        for (k, v) in v.iter().rev() {
+            t.insert(*k, *v);
         }
 
         assert!(t.remove(&0));
@@ -129,15 +130,15 @@ mod tests {
         v.remove(5);
         v.remove(0);
 
-        for (i, &x) in t.iter().enumerate() {
+        for (i, x) in t.iter().enumerate() {
             // println!("{}", x);
-            assert_eq!(x, v[i]);
+            assert_eq!((*x.0, *x.1), v[i]);
         }
-        assert_eq!(v, t.into_iter().collect::<Vec<i32>>());
+        assert_eq!(v, t.into_iter().collect::<Vec<_>>());
 
         let mut rng = rand::thread_rng();
         let n = 100000;
-        let mut tr = Treap::new();
+        let mut tr = TreapSet::new();
 
         let t = time::Instant::now();
         for _ in 0..n {
@@ -166,13 +167,13 @@ mod tests {
         let mut rng = rand::thread_rng();
         {
             // test diff
-            let n = 20000;
-            let mut skip = SkipListSet::new();
+            let n = 2000;
+            let mut skip = SkipListMap::new();
             let mut btree = BTreeSet::new();
 
             for _ in 0..n {
                 let r = rng.gen_range(i32::MIN, i32::MAX);
-                skip.insert(r);
+                skip.insert(r, r);
                 btree.insert(r);
                 assert_eq!(skip.len(), btree.len());
             }
@@ -186,6 +187,8 @@ mod tests {
                 let r = &rng.gen_range(i32::MIN, i32::MAX);
                 assert_eq!(skip.get(r).is_some(), btree.get(r).is_some());
             }
+
+            for i in skip {}
         }
 
         let n = 100000;
