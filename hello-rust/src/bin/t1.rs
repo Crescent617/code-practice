@@ -41,15 +41,19 @@ macro_rules! map {
 struct Solution;
 
 use std::rc::Rc;
+use std::time;
+
 
 fn main() {
-    let v = vec![0; 2];
-    let x = Rc::new(v);
-    let y = x.clone();
-
-    unsafe {
-        (*(Rc::as_ptr(&x) as *mut Vec<i32>))[0] = 1000;
+    let t = time::Instant::now();
+    let n = 100;
+    for _ in 0..n {
+        rand::random::<u8>() > 1;
     }
-    dbg!(x);
-    // LinkedList;
+    println!("Int use: {:?}", t.elapsed());
+    let t = time::Instant::now();
+    for _ in 0..n {
+        rand::random::<f32>() < 1.0;
+    }
+    println!("Float use: {:?}", t.elapsed());
 }

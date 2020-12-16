@@ -1,22 +1,27 @@
 #![allow(unused_imports)]
 
-mod treap;
-use treap::Treap;
-
 mod bitree;
-use bitree::BITree;
-
 mod leftist_tree;
-use leftist_tree::LeftistTree;
-
 mod segment_tree;
+mod skip_list;
+mod treap;
+
+use bitree::BITree;
+use leftist_tree::LeftistTree;
 use segment_tree::{PstSegTree, SegTree};
+use skip_list::SkipListSet;
+use treap::Treap;
 
 #[cfg(test)]
 mod tests {
+
     use super::*;
     use rand::prelude::*;
-    use std::{collections::BinaryHeap, time};
+    use skip_list::SkipListMap;
+    use std::{
+        collections::{BTreeSet, BinaryHeap},
+        time,
+    };
 
     #[test]
     fn test_leftist_tree() {
@@ -110,7 +115,7 @@ mod tests {
         assert_eq!(v, t.into_iter().collect::<Vec<i32>>());
 
         let mut rng = rand::thread_rng();
-        let n = 10000;
+        let n = 100000;
         let mut tr = Treap::new();
 
         let t = time::Instant::now();
@@ -133,5 +138,68 @@ mod tests {
         }
 
         println!("BTree use: {:?}", t.elapsed());
+    }
+
+    #[test]
+    fn test_skip_list() {
+        let mut rng = rand::thread_rng();
+        let mut s = SkipListMap::new();
+        for i in 0..100 {
+            s.insert(i, i);
+        }
+        println!("{}", s);
+        assert!(s.get(&99).is_some());
+        assert!(s.get(&100).is_none());
+        s.insert(10, 10);
+        assert_eq!(s.len(), 100);
+
+        {
+            let n = 1000;
+            let mut s = SkipListSet::new();
+            let mut b = BTreeSet::new();
+
+            for _ in 0..n {
+                let r = rng.gen_range(i32::MIN, i32::MAX);
+                s.insert(r);
+                b.insert(r);
+            }
+            assert_eq!(s.len(), b.len());
+            for _ in 0..n {
+                let r = &rng.gen_range(i32::MIN, i32::MAX);
+                assert_eq!(s.get(r).is_some(), b.get(r).is_some());
+            }
+        }
+
+        let n = 100000;
+
+        {
+            let mut s = SkipListSet::new();
+            let t = time::Instant::now();
+            for _ in 0..n {
+                s.insert(rng.gen_range(i32::MIN, i32::MAX));
+            }
+            let t1 = t.elapsed();
+            println!("SkipList insert use: {:?}", t1);
+
+            for _ in 0..n {
+                s.get(&rng.gen_range(i32::MIN, i32::MAX));
+            }
+            println!("SkipList find use: {:?}", t.elapsed() - t1);
+        }
+
+        {
+            let mut b = BTreeSet::new();
+            let t = time::Instant::now();
+            for _ in 0..n {
+                b.insert(rng.gen_range(i32::MIN, i32::MAX));
+            }
+            let t1 = t.elapsed();
+            println!("BTree insert use: {:?}", t1);
+
+            for _ in 0..n {
+                b.get(&rng.gen_range(i32::MIN, i32::MAX));
+            }
+            println!("BTree find use: {:?}", t.elapsed() - t1);
+        }
     }
 }
