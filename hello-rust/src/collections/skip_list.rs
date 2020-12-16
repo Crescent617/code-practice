@@ -1,10 +1,15 @@
 #![allow(dead_code)]
 
-use std::fmt::Formatter;
 use std::ptr::NonNull;
-use std::{cmp::Ordering, fmt, fmt::Display};
+use std::{cmp::Ordering, fmt, fmt::Debug};
+use std::{
+    fmt::Formatter,
+    mem::{size_of, size_of_val},
+};
 
-const P: f32 = 0.5;
+use fmt::Display;
+
+const P: f32 = 0.3;
 const MAX_LEVEL: usize = 32;
 
 type Link<K, V> = Option<NonNull<Node<K, V>>>;
@@ -25,22 +30,26 @@ impl<T: Ord> SkipListSet<T> {
     }
 
     pub fn get(&self, key: &T) -> Option<&()> {
-        self.map.get(key).map(|x| &())
+        self.map.get(key)
     }
 
     pub fn len(&self) -> usize {
         self.map.len()
     }
 
-    pub fn max_level(&self) -> usize {
-        self.map.level
+    pub fn height(&self) -> usize {
+        self.map._height
+    }
+
+    pub fn remove(&mut self, key: &T) -> bool {
+        self.map.remove(key)
     }
 }
 
 pub struct SkipListMap<K, V> {
     heads: Vec<Link<K, V>>,
-    length: usize,
-    level: usize,
+    _len: usize,
+    _height: usize,
 }
 
 struct Node<K, V> {
@@ -59,8 +68,6 @@ impl<K, V> Node<K, V> {
     }
 
     fn random_level() -> usize {
-        // let num = rand::random::<u32>();
-        // (1 + num.trailing_ones() as usize).min(MAX_LEVEL)
         let mut l = 1;
         while rand::random::<f32>() < P && l < MAX_LEVEL {
             l += 1;
@@ -73,33 +80,33 @@ impl<K: Ord, V> SkipListMap<K, V> {
     pub fn new() -> Self {
         Self {
             heads: vec![None; MAX_LEVEL],
-            length: 0,
-            level: 0,
+            _len: 0,
+            _height: 0,
         }
     }
 
     pub fn len(&self) -> usize {
-        self.length
+        self._len
     }
 
     pub fn height(&self) -> usize {
-        self.level
+        self._height
     }
 
     pub fn insert(&mut self, key: K, val: V) -> bool {
-        if let Some(mut nd) = Self::get_node(&self.heads, self.level, &key) {
+        if let Some(mut nd) = Self::get_node(&self.heads, self._height, &key) {
             unsafe {
                 nd.as_mut().val = val;
             }
             false
         } else {
-            self.length += 1;
+            self._len += 1;
             let node = Box::new(Node::new(key, val));
-            self.level = self.level.max(node.nexts.len());
+            self._height = self._height.max(node.nexts.len());
             unsafe {
                 Self::insert_node(
                     &mut self.heads,
-                    self.level,
+                    self._height,
                     NonNull::new_unchecked(Box::into_raw(node)),
                 );
             }
@@ -107,65 +114,78 @@ impl<K: Ord, V> SkipListMap<K, V> {
         }
     }
 
-    fn insert_node(
-        mut next_nodes: &mut [Link<K, V>],
-        mut level: usize,
-        mut node: NonNull<Node<K, V>>,
-    ) {
+    fn insert_node(mut nexts: &mut [Link<K, V>], mut h: usize, mut node: NonNull<Node<K, V>>) {
         let node_level = unsafe { node.as_ref().nexts.len() };
 
-        while level > 0 {
-            if let Some(p) = next_nodes[level - 1] {
+        while h > 0 {
+            if let Some(p) = nexts[h - 1] {
                 unsafe {
                     match node.as_ref().key.cmp(&p.as_ref().key) {
                         Ordering::Equal => panic!(),
                         Ordering::Less => {
-                            if level <= node_level {
-                                node.as_mut().nexts[level - 1] = Some(p);
-                                next_nodes[level - 1] = Some(node);
+                            if h <= node_level {
+                                node.as_mut().nexts[h - 1].replace(p);
+                                nexts[h - 1].replace(node);
                             }
-                            level -= 1;
+                            h -= 1;
                         }
-                        Ordering::Greater => next_nodes = &mut (*p.as_ptr()).nexts,
+                        Ordering::Greater => nexts = &mut (*p.as_ptr()).nexts,
                     }
                 }
             } else {
-                if level <= node_level {
-                    next_nodes[level - 1] = Some(node);
+                if h <= node_level {
+                    nexts[h - 1].replace(node);
                 }
-                level -= 1;
+                h -= 1;
             }
         }
     }
 
     pub fn get(&self, key: &K) -> Option<&V> {
-        Self::get_node(&self.heads, self.level, key).map(|x| unsafe { &(*x.as_ptr()).val })
+        Self::get_node(&self.heads, self._height, key).map(|x| unsafe { &(*x.as_ptr()).val })
     }
 
-    fn get_node(
-        mut next_nodes: &[Link<K, V>],
-        mut level: usize,
-        key: &K,
-    ) -> Option<NonNull<Node<K, V>>> {
-        while level > 0 {
-            if let Some(p) = next_nodes[level - 1] {
+    fn get_node(mut nexts: &[Link<K, V>], mut h: usize, key: &K) -> Option<NonNull<Node<K, V>>> {
+        while h > 0 {
+            if let Some(p) = nexts[h - 1] {
                 match key.cmp(unsafe { &p.as_ref().key }) {
                     Ordering::Equal => return Some(p),
-                    Ordering::Less => level -= 1,
-                    Ordering::Greater => next_nodes = unsafe { &mut (*p.as_ptr()).nexts },
+                    Ordering::Less => h -= 1,
+                    Ordering::Greater => nexts = unsafe { &mut (*p.as_ptr()).nexts },
                 }
             } else {
-                level -= 1;
+                h -= 1;
             }
         }
         None
     }
 
+    fn remove_node(mut nexts: &mut [Link<K, V>], mut h: usize, key: &K) -> Option<Box<Node<K, V>>> {
+        let mut to_remove = None;
+        while h > 0 {
+            if let Some(p) = nexts[h - 1] {
+                match key.cmp(unsafe { &p.as_ref().key }) {
+                    Ordering::Equal => unsafe {
+                        to_remove.replace(p);
+                        nexts[h - 1] = p.as_ref().nexts[h - 1];
+                        h -= 1;
+                    },
+                    Ordering::Less => h -= 1,
+                    Ordering::Greater => nexts = unsafe { &mut (*p.as_ptr()).nexts },
+                }
+            } else {
+                h -= 1;
+            }
+        }
+        to_remove.map(|x| unsafe { Box::from_raw(x.as_ptr()) })
+    }
+
     pub fn remove(&mut self, key: &K) -> bool {
-        todo!();
-        if self.get(key).is_some() {
+        if self.get(key).is_none() {
             false
         } else {
+            let n = self._height;
+            Self::remove_node(&mut self.heads, n, key);
             true
         }
     }
@@ -183,19 +203,34 @@ impl<K, V> Drop for SkipListMap<K, V> {
     }
 }
 
-impl<K: Display, V: Display> Display for SkipListMap<K, V> {
+impl<K: Display, V: Debug> fmt::Display for SkipListMap<K, V> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        for i in (0..self.level).rev() {
+        for i in (0..self._height).rev() {
             let mut node = self.heads[i];
+            let mut cnt = 0;
+
             while let Some(p) = node {
+                cnt += 1;
                 unsafe {
-                    // write!(f, "({} => {}) -> ", p.as_ref().key, p.as_ref().val)?;
-                    write!(f, "{} -> ", p.as_ref().key)?;
+                    if cnt < 5 {
+                        if size_of_val(&p.as_ref().val) > 0 {
+                            write!(f, "({} => {:?}) -> ", p.as_ref().key, p.as_ref().val)?;
+                        } else {
+                            write!(f, "{} -> ", p.as_ref().key)?;
+                        }
+                    }
                     node = p.as_ref().nexts[i];
                 }
             }
-            write!(f, "end\n")?;
+
+            write!(f, "... end, total {} elements.\n", cnt)?;
         }
-        write!(f, "end")
+        write!(f, "")
+    }
+}
+
+impl<T: Display> fmt::Display for SkipListSet<T> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.map)
     }
 }

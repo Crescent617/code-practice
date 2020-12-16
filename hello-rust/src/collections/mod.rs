@@ -12,6 +12,27 @@ use segment_tree::{PstSegTree, SegTree};
 use skip_list::SkipListSet;
 use treap::Treap;
 
+#[allow(unused_macros)]
+macro_rules! timeit {
+    ($block: tt) => {{
+        use std::time;
+        let t = time::Instant::now();
+        $block;
+        let d = t.elapsed();
+        println!("Time usage: {:?}", d);
+        d
+    }};
+
+    ($name: expr, $block: tt) => {{
+        use std::time;
+        let t = time::Instant::now();
+        $block;
+        let d = t.elapsed();
+        println!("{} use: {:?}", $name, d);
+        d
+    }};
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -143,63 +164,66 @@ mod tests {
     #[test]
     fn test_skip_list() {
         let mut rng = rand::thread_rng();
-        let mut s = SkipListMap::new();
-        for i in 0..100 {
-            s.insert(i, i);
-        }
-        println!("{}", s);
-        assert!(s.get(&99).is_some());
-        assert!(s.get(&100).is_none());
-        s.insert(10, 10);
-        assert_eq!(s.len(), 100);
-
         {
-            let n = 1000;
-            let mut s = SkipListSet::new();
-            let mut b = BTreeSet::new();
+            // test diff
+            let n = 20000;
+            let mut skip = SkipListSet::new();
+            let mut btree = BTreeSet::new();
 
             for _ in 0..n {
                 let r = rng.gen_range(i32::MIN, i32::MAX);
-                s.insert(r);
-                b.insert(r);
+                skip.insert(r);
+                btree.insert(r);
+                assert_eq!(skip.len(), btree.len());
             }
-            assert_eq!(s.len(), b.len());
+
+            for _ in 0..n / 2 {
+                let r = &rng.gen_range(i32::MIN, i32::MAX);
+                assert_eq!(skip.remove(r), btree.remove(r));
+            }
+
             for _ in 0..n {
                 let r = &rng.gen_range(i32::MIN, i32::MAX);
-                assert_eq!(s.get(r).is_some(), b.get(r).is_some());
+                assert_eq!(skip.get(r).is_some(), btree.get(r).is_some());
             }
         }
 
         let n = 100000;
 
-        {
-            let mut s = SkipListSet::new();
-            let t = time::Instant::now();
+        let mut skip = SkipListSet::new();
+        timeit!("SkipList insert", {
             for _ in 0..n {
-                s.insert(rng.gen_range(i32::MIN, i32::MAX));
+                skip.insert(rng.gen_range(i32::MIN, i32::MAX));
             }
-            let t1 = t.elapsed();
-            println!("SkipList insert use: {:?}", t1);
+        });
+        timeit!("SkipList get", {
+            for _ in 0..n {
+                skip.get(&rng.gen_range(i32::MIN, i32::MAX));
+            }
+        });
+        timeit!("SkipList remove", {
+            for _ in 0..n {
+                skip.remove(&rng.gen_range(i32::MIN, i32::MAX));
+            }
+        });
+        println!("SkipList height: {}", skip.height());
+        println!("SkipList: {}", skip);
 
+        let mut btree = BTreeSet::new();
+        timeit!("BTree insert", {
             for _ in 0..n {
-                s.get(&rng.gen_range(i32::MIN, i32::MAX));
+                btree.insert(rng.gen_range(i32::MIN, i32::MAX));
             }
-            println!("SkipList find use: {:?}", t.elapsed() - t1);
-        }
-
-        {
-            let mut b = BTreeSet::new();
-            let t = time::Instant::now();
+        });
+        timeit!("BTree get", {
             for _ in 0..n {
-                b.insert(rng.gen_range(i32::MIN, i32::MAX));
+                btree.get(&rng.gen_range(i32::MIN, i32::MAX));
             }
-            let t1 = t.elapsed();
-            println!("BTree insert use: {:?}", t1);
-
+        });
+        timeit!("BTree remove", {
             for _ in 0..n {
-                b.get(&rng.gen_range(i32::MIN, i32::MAX));
+                btree.remove(&rng.gen_range(i32::MIN, i32::MAX));
             }
-            println!("BTree find use: {:?}", t.elapsed() - t1);
-        }
+        });
     }
 }
