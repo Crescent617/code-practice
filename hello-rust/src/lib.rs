@@ -1,4 +1,4 @@
-mod collections;
+pub mod collections;
 use std::sync::mpsc;
 use std::sync::Arc;
 use std::sync::Mutex;

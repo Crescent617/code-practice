@@ -1,10 +1,11 @@
 #![allow(unused_imports)]
 
-mod bitree;
-mod leftist_tree;
-mod segment_tree;
-mod skip_list;
-mod treap;
+pub mod bitree;
+pub mod leftist_tree;
+pub mod segment_tree;
+pub mod skip_list;
+pub mod stream;
+pub mod treap;
 
 use bitree::BITree;
 use leftist_tree::LeftistTree;
@@ -39,11 +40,11 @@ mod tests {
     use super::*;
     use rand::prelude::*;
     use skip_list::SkipListMap;
-    use treap::TreapSet;
     use std::{
         collections::{BTreeSet, BinaryHeap},
         time,
     };
+    use treap::TreapSet;
 
     #[test]
     fn test_leftist_tree() {
@@ -87,7 +88,7 @@ mod tests {
 
     #[test]
     fn test_segtree() {
-        let mut seg = PstSegTree::new(0, 1000, Box::new(|&x, &y| x + y));
+        let mut seg = PstSegTree::new(0, 1000, |&x, &y| x + y);
         let v = vec![10, 20, 30, 50, 100];
         for x in v.into_iter().enumerate() {
             seg.insert(x.0, x.1);

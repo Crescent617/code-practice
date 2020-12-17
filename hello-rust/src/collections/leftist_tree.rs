@@ -1,14 +1,14 @@
 use std::mem;
 
 #[derive(Debug)]
-struct LTreeNode<T: Ord> {
+struct Node<T: Ord> {
     elem: T,
-    left: LTreeLink<T>,
-    right: LTreeLink<T>,
+    left: Link<T>,
+    right: Link<T>,
     dist: usize,
 }
 
-impl<T: Ord> LTreeNode<T> {
+impl<T: Ord> Node<T> {
     fn new(elem: T) -> Self {
         Self {
             elem,
@@ -19,11 +19,11 @@ impl<T: Ord> LTreeNode<T> {
     }
 }
 
-type LTreeLink<T> = Option<Box<LTreeNode<T>>>;
+type Link<T> = Option<Box<Node<T>>>;
 
 #[derive(Debug)]
 pub struct LeftistTree<T: Ord> {
-    root: LTreeLink<T>,
+    root: Link<T>,
     size: usize,
 }
 
@@ -48,11 +48,11 @@ impl<T: Ord> LeftistTree<T> {
         self.size
     }
 
-    fn get_node_dist(node: &LTreeLink<T>) -> usize {
+    fn get_node_dist(node: &Link<T>) -> usize {
         node.as_ref().map_or(0, |x| x.dist)
     }
 
-    fn merge_node(a: LTreeLink<T>, b: LTreeLink<T>) -> LTreeLink<T> {
+    fn merge_node(a: Link<T>, b: Link<T>) -> Link<T> {
         if a.is_none() || b.is_none() {
             a.or(b)
         } else if let (Some(mut a), Some(mut b)) = (a, b) {
@@ -78,7 +78,7 @@ impl<T: Ord> LeftistTree<T> {
 
     pub fn push(&mut self, val: T) {
         self.size += 1;
-        let node = Some(Box::new(LTreeNode::new(val)));
+        let node = Some(Box::new(Node::new(val)));
         self.root = Self::merge_node(self.root.take(), node);
     }
 

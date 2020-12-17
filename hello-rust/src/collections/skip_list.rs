@@ -172,7 +172,7 @@ impl<K: Ord, V> SkipListMap<K, V> {
                     Ordering::Less => h -= 1,
                     Ordering::Greater => nexts = unsafe { &mut (*p.as_ptr()).nexts },
                 }
-            } else {
+            } else{
                 h -= 1;
             }
         }

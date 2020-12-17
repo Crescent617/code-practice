@@ -40,21 +40,12 @@ macro_rules! map {
 #[derive(Debug)]
 struct Solution;
 
-use std::rc::Rc;
-use std::time;
-
-
+use hello_rust::collections::stream::*;
 
 fn main() {
-    let t = time::Instant::now();
-    let n = 100;
-    for _ in 0..n {
-        rand::random::<u8>() > 1;
+    let mut s = prime_stream().take(100);
+    while let Stream::NonEmpty(mut t) = s {
+        print!("{} -> ", t.head());
+        s = t.pop_tail();
     }
-    println!("Int use: {:?}", t.elapsed());
-    let t = time::Instant::now();
-    for _ in 0..n {
-        rand::random::<f32>() < 1.0;
-    }
-    println!("Float use: {:?}", t.elapsed());
 }

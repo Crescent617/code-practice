@@ -4,26 +4,30 @@ use std::{cell::RefCell, mem, ptr::NonNull, rc::Rc, vec};
 
 use mem::size_of;
 
-pub struct SegTree<T> {
+pub struct SegTree<T, F>
+where
+    F: Fn(&T, &T) -> T,
+{
     buf: Vec<Option<T>>,
     size: usize,
     offset: usize,
-    _op: BinaryOp<T>,
+    _op: F,
 }
 
-type BinaryOp<T> = Box<dyn Fn(&T, &T) -> T>;
-
-impl<T: Clone> SegTree<T> {
-    pub fn new(size: usize, op: BinaryOp<T>) -> Self {
+impl<T: Clone, F> SegTree<T, F>
+where
+    F: Fn(&T, &T) -> T,
+{
+    pub fn new(size: usize, op: F) -> Self {
         Self::cons(vec![], size, op)
     }
 
-    pub fn from(v: Vec<T>, op: BinaryOp<T>) -> Self {
+    pub fn from(v: Vec<T>, op: F) -> Self {
         let n = v.len();
         Self::cons(v, n, op)
     }
 
-    fn cons(data: Vec<T>, size: usize, op: BinaryOp<T>) -> Self {
+    fn cons(data: Vec<T>, size: usize, op: F) -> Self {
         let bit_num = mem::size_of::<usize>() * 8;
         let offset = 1 << bit_num - size.leading_zeros() as usize;
         debug_assert!(offset >= size);
@@ -104,9 +108,12 @@ impl<T: Clone> SegTree<T> {
     }
 }
 
-pub struct PstSegTree<T> {
+pub struct PstSegTree<T, F>
+where
+    F: Fn(&T, &T) -> T,
+{
     roots: Vec<Rc<Node<T>>>,
-    _op: BinaryOp<T>,
+    _op: F,
     begin: usize,
     end: usize,
 }
@@ -153,8 +160,11 @@ impl<T> Node<T> {
     }
 }
 
-impl<T: Ord + Copy> PstSegTree<T> {
-    pub fn new(begin: usize, end: usize, op: BinaryOp<T>) -> Self {
+impl<T: Ord + Copy, F> PstSegTree<T, F>
+where
+    F: Fn(&T, &T) -> T,
+{
+    pub fn new(begin: usize, end: usize, op: F) -> Self {
         Self {
             roots: vec![],
             begin,
