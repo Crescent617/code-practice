@@ -1,15 +1,15 @@
 use ptr::NonNull;
 use std::{cmp::Ordering, marker::PhantomData, ops::Add, ptr};
 
-type Link<K, V> = Option<NonNull<Node<K, V>>>;
+type Edge<K, V> = Option<NonNull<Node<K, V>>>;
 
 // todo: add size
 struct Node<K, V> {
     key: K,
     val: V,
     pri: f32,
-    left: Link<K, V>,
-    right: Link<K, V>,
+    left: Edge<K, V>,
+    right: Edge<K, V>,
 }
 
 impl<K, V> Node<K, V> {
@@ -62,7 +62,7 @@ impl<T: Add<Output = T> + Ord + Unit + Clone> TreapSet<T> {
 }
 
 pub struct TreapMap<K, V> {
-    root: Link<K, V>,
+    root: Edge<K, V>,
 }
 
 impl<K, V> TreapMap<K, V> {
@@ -122,7 +122,7 @@ impl<K: Ord, V> TreapMap<K, V> {
         }
     }
 
-    fn split_node(mut node: Link<K, V>, key: &K) -> (Link<K, V>, Link<K, V>) {
+    fn split_node(mut node: Edge<K, V>, key: &K) -> (Edge<K, V>, Edge<K, V>) {
         if let Some(nd) = &mut node {
             let mut n = unsafe { nd.as_mut() };
             if &n.key < key {
@@ -139,7 +139,7 @@ impl<K: Ord, V> TreapMap<K, V> {
         }
     }
 
-    fn merge_node(mut node1: Link<K, V>, mut node2: Link<K, V>) -> Link<K, V> {
+    fn merge_node(mut node1: Edge<K, V>, mut node2: Edge<K, V>) -> Edge<K, V> {
         if let (Some(a), Some(b)) = (&mut node1, &mut node2) {
             unsafe {
                 if a.as_ref().pri > b.as_ref().pri {
@@ -214,7 +214,7 @@ impl<'a, K, V> IntoIterator for &'a TreapMap<K, V> {
 }
 
 pub struct Iter<'a, K, V> {
-    pointer: Link<K, V>,
+    pointer: Edge<K, V>,
     stack: Vec<NonNull<Node<K, V>>>,
     _marker: PhantomData<&'a Node<K, V>>,
 }

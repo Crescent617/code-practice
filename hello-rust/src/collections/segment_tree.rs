@@ -118,15 +118,15 @@ where
     end: usize,
 }
 
-type Link<T> = Option<Rc<Node<T>>>;
+type Edge<T> = Option<Rc<Node<T>>>;
 
 struct Node<T> {
     val: T,
     size: usize,
     begin: usize,
     end: usize,
-    left: Link<T>,
-    right: Link<T>,
+    left: Edge<T>,
+    right: Edge<T>,
 }
 
 impl<T> Node<T> {
@@ -141,21 +141,21 @@ impl<T> Node<T> {
         }
     }
 
-    fn set_left(&mut self, left: Link<T>) {
+    fn set_left(&mut self, left: Edge<T>) {
         left.map(|x| {
             self.size += x.size;
             self.left.replace(x);
         });
     }
 
-    fn set_right(&mut self, right: Link<T>) {
+    fn set_right(&mut self, right: Edge<T>) {
         right.map(|x| {
             self.size += x.size;
             self.right.replace(x);
         });
     }
 
-    fn wrap(self) -> Link<T> {
+    fn wrap(self) -> Edge<T> {
         Some(Rc::new(self))
     }
 }

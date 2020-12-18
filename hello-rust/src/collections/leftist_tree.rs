@@ -3,8 +3,8 @@ use std::mem;
 #[derive(Debug)]
 struct Node<T: Ord> {
     elem: T,
-    left: Link<T>,
-    right: Link<T>,
+    left: Edge<T>,
+    right: Edge<T>,
     dist: usize,
 }
 
@@ -19,11 +19,11 @@ impl<T: Ord> Node<T> {
     }
 }
 
-type Link<T> = Option<Box<Node<T>>>;
+type Edge<T> = Option<Box<Node<T>>>;
 
 #[derive(Debug)]
 pub struct LeftistTree<T: Ord> {
-    root: Link<T>,
+    root: Edge<T>,
     size: usize,
 }
 
@@ -48,11 +48,11 @@ impl<T: Ord> LeftistTree<T> {
         self.size
     }
 
-    fn get_node_dist(node: &Link<T>) -> usize {
+    fn get_node_dist(node: &Edge<T>) -> usize {
         node.as_ref().map_or(0, |x| x.dist)
     }
 
-    fn merge_node(a: Link<T>, b: Link<T>) -> Link<T> {
+    fn merge_node(a: Edge<T>, b: Edge<T>) -> Edge<T> {
         if a.is_none() || b.is_none() {
             a.or(b)
         } else if let (Some(mut a), Some(mut b)) = (a, b) {

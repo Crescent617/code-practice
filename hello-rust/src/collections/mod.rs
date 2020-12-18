@@ -6,6 +6,8 @@ pub mod segment_tree;
 pub mod skip_list;
 pub mod stream;
 pub mod treap;
+pub mod rbtree;
+pub mod binary_tree;
 
 use bitree::BITree;
 use leftist_tree::LeftistTree;
