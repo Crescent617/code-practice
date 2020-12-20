@@ -1,16 +1,17 @@
 #![allow(unused_imports)]
 
+pub mod binary_tree;
 pub mod bitree;
 pub mod leftist_tree;
+pub mod rbtree;
 pub mod segment_tree;
 pub mod skip_list;
 pub mod stream;
 pub mod treap;
-pub mod rbtree;
-pub mod binary_tree;
 
 use bitree::BITree;
 use leftist_tree::LeftistTree;
+use rbtree::RBTreeMap;
 use segment_tree::{PstSegTree, SegTree};
 use skip_list::SkipListSet;
 use treap::TreapMap;
@@ -43,7 +44,7 @@ mod tests {
     use rand::prelude::*;
     use skip_list::SkipListMap;
     use std::{
-        collections::{BTreeSet, BinaryHeap},
+        collections::{BTreeMap, BTreeSet, BinaryHeap},
         time,
     };
     use treap::TreapSet;
@@ -120,13 +121,12 @@ mod tests {
 
     #[test]
     fn test_treap() {
-        let mut v: Vec<_> = (0..100).zip(0..100).collect();
+        let mut v: Vec<_> = (0..10).zip(0..10).collect();
         let mut t = TreapMap::new();
 
         for (k, v) in v.iter().rev() {
             t.insert(*k, *v);
         }
-
         assert!(t.remove(&0));
         assert!(t.remove(&5));
 
@@ -140,29 +140,21 @@ mod tests {
         assert_eq!(v, t.into_iter().collect::<Vec<_>>());
 
         let mut rng = rand::thread_rng();
-        let n = 100000;
+        let n = 10000;
         let mut tr = TreapSet::new();
+        let mut b = BTreeSet::new();
 
-        let t = time::Instant::now();
         for _ in 0..n {
-            tr.insert(rng.gen_range(i32::MIN, i32::MAX));
+            let r = rng.gen_range(i32::MIN, i32::MAX);
+            tr.insert(r);
+            b.insert(r);
         }
+        
         for _ in 0..n {
-            tr.remove(&rng.gen_range(i32::MIN, i32::MAX));
+            let r = &rng.gen_range(i32::MIN, i32::MAX);
+            assert_eq!(b.remove(&r), tr.remove(&r));
+            assert_eq!(b.remove(&r), tr.remove(&r));
         }
-        println!("Treap use: {:?}", t.elapsed());
-
-        let mut tr = std::collections::BTreeSet::new();
-
-        let t = time::Instant::now();
-        for _ in (0..n).rev() {
-            tr.insert(rng.gen_range(i32::MIN, i32::MAX));
-        }
-        for _ in 0..n {
-            tr.remove(&rng.gen_range(i32::MIN, i32::MAX));
-        }
-
-        println!("BTree use: {:?}", t.elapsed());
     }
 
     #[test]
@@ -229,6 +221,45 @@ mod tests {
         timeit!("BTree remove", {
             for _ in 0..n {
                 btree.remove(&rng.gen_range(i32::MIN, i32::MAX));
+            }
+        });
+    }
+
+    #[test]
+    fn test_rbtree() {
+        let mut rb = RBTreeMap::new();
+        let mut b = BTreeMap::new();
+
+        for i in 0..2000 {
+            let k = rand::random::<u8>();
+            b.insert(k, i);
+            rb.insert(k, i);
+        }
+
+        for _ in 0..1000 {
+            let k = rand::random::<u8>();
+            assert_eq!(rb.remove(&k), b.remove(&k).is_some());
+            assert_eq!(rb.len(), b.len());
+        }
+
+        let n = 100000;
+        timeit!("RBTree", {
+            let mut t = RBTreeMap::new();
+            for _ in 0..n {
+                t.insert(rand::random::<i32>(), ());
+            }
+            for _ in 0..n {
+                t.remove(&rand::random::<i32>());
+            }
+        });
+
+        timeit!("BTree", {
+            let mut t = BTreeMap::new();
+            for _ in 0..n {
+                t.insert(rand::random::<i32>(), ());
+            }
+            for _ in 0..n {
+                t.remove(&rand::random::<i32>());
             }
         });
     }

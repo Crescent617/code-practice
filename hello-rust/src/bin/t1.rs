@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, LinkedList};
+use std::{collections::{BTreeMap, BTreeSet, LinkedList}, ptr::NonNull};
 
 #[allow(unused_macros)]
 macro_rules! input {
@@ -40,12 +40,20 @@ macro_rules! map {
 #[derive(Debug)]
 struct Solution;
 
-use hello_rust::collections::stream::*;
+use hello_rust::collections::rbtree::*;
 
 fn main() {
-    let mut s = prime_stream().take(100);
-    while let Stream::NonEmpty(mut t) = s {
-        print!("{} -> ", t.head());
-        s = t.pop_tail();
+    let mut rb = RBTreeMap::new();
+    let mut b = BTreeMap::new();
+    for i in 0..2000 {
+        let k = rand::random::<u8>();
+        b.insert(k, i);
+        rb.insert(k, i);
     }
+    for i in 0..400 {
+        let k = rand::random::<u8>();
+        assert_eq!(rb.remove(&k), b.remove(&k).is_some())
+    }
+
+    // println!("{}", rb);
 }

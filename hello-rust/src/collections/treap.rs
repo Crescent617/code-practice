@@ -1,15 +1,24 @@
+use super::binary_tree;
 use ptr::NonNull;
-use std::{cmp::Ordering, marker::PhantomData, ops::Add, ptr};
+use std::{cmp::Ordering, io::SeekFrom, iter::Map, marker::PhantomData, ops::Add, ptr};
 
 type Edge<K, V> = Option<NonNull<Node<K, V>>>;
 
 // todo: add size
-struct Node<K, V> {
+pub struct Node<K, V> {
     key: K,
     val: V,
     pri: f32,
     left: Edge<K, V>,
     right: Edge<K, V>,
+}
+
+pub struct TreapSet<T> {
+    map: TreapMap<T, ()>,
+}
+
+pub struct TreapMap<K, V> {
+    root: Edge<K, V>,
 }
 
 impl<K, V> Node<K, V> {
@@ -23,14 +32,12 @@ impl<K, V> Node<K, V> {
         }
     }
 
-    fn wrap(self) -> Option<NonNull<Self>> {
+    fn wrap(self) -> NonNull<Self> {
         let b = Box::new(self);
-        Some(NonNull::from(Box::leak(b)))
+        NonNull::from(Box::leak(b))
     }
-}
 
-pub struct TreapSet<T> {
-    map: TreapMap<T, ()>,
+    // fn iter(&self) -> tree::InorderIter<>
 }
 
 impl<T: Ord> TreapSet<T> {
@@ -53,6 +60,14 @@ impl<T: Ord> TreapSet<T> {
     pub fn get(&self, elem: &T) -> Option<&()> {
         self.map.get(elem)
     }
+
+    pub fn iter(&self) -> binary_tree::Iter<Node<T, ()>> {
+        (&self.map as &dyn binary_tree::BinaryTreeIter<Node = Node<T, ()>>).iter()
+    }
+
+    pub fn into_iter(mut self) -> binary_tree::IntoIter<Node<T, ()>> {
+        (&mut self.map as &mut dyn binary_tree::BinaryTreeIter<Node = Node<T, ()>>).into_iter()
+    }
 }
 
 impl<T: Add<Output = T> + Ord + Unit + Clone> TreapSet<T> {
@@ -61,31 +76,17 @@ impl<T: Add<Output = T> + Ord + Unit + Clone> TreapSet<T> {
     }
 }
 
-pub struct TreapMap<K, V> {
-    root: Edge<K, V>,
-}
-
 impl<K, V> TreapMap<K, V> {
     pub fn new() -> Self {
         Self { root: None }
     }
 
-    pub fn iter(&self) -> Iter<K, V> {
-        Iter {
-            stack: vec![],
-            pointer: self.root,
-            _marker: PhantomData,
-        }
+    pub fn iter(&self) -> binary_tree::Iter<Node<K, V>> {
+        (self as &dyn binary_tree::BinaryTreeIter<Node = Node<K, V>>).iter()
     }
 
-    pub fn into_iter(mut self) -> IntoIter<K, V> {
-        let mut stk = vec![];
-        self.root.take().map(|x| stk.push(x)); // must take out
-
-        IntoIter {
-            stack: stk,
-            _marker: PhantomData,
-        }
+    pub fn into_iter(mut self) -> binary_tree::IntoIter<Node<K, V>> {
+        (&mut self as &mut dyn binary_tree::BinaryTreeIter<Node = Node<K, V>>).into_iter()
     }
 }
 
@@ -176,7 +177,7 @@ impl<K: Ord, V> TreapMap<K, V> {
             return false;
         }
         let (mut lt, ge) = Self::split_node(self.root.take(), &key);
-        lt = Self::merge_node(lt, Node::new(key, val).wrap());
+        lt = Self::merge_node(lt, Some(Node::new(key, val).wrap()));
         self.root = Self::merge_node(lt, ge);
         true
     }
@@ -191,81 +192,6 @@ impl<K, V> Drop for TreapMap<K, V> {
             let node = unsafe { Box::from_raw(x.as_ptr()) };
             node.left.map(|u| s.push(u));
             node.right.map(|u| s.push(u));
-        }
-    }
-}
-
-impl<K, V> IntoIterator for TreapMap<K, V> {
-    type Item = (K, V);
-    type IntoIter = IntoIter<K, V>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.into_iter()
-    }
-}
-
-impl<'a, K, V> IntoIterator for &'a TreapMap<K, V> {
-    type Item = (&'a K, &'a V);
-    type IntoIter = Iter<'a, K, V>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
-    }
-}
-
-pub struct Iter<'a, K, V> {
-    pointer: Edge<K, V>,
-    stack: Vec<NonNull<Node<K, V>>>,
-    _marker: PhantomData<&'a Node<K, V>>,
-}
-
-pub struct IntoIter<K, V> {
-    stack: Vec<NonNull<Node<K, V>>>,
-    _marker: PhantomData<Box<Node<K, V>>>,
-}
-
-impl<'a, K, V> Iterator for Iter<'a, K, V> {
-    type Item = (&'a K, &'a V);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        while let Some(x) = self.pointer {
-            self.stack.push(x);
-            unsafe {
-                self.pointer = x.as_ref().left;
-            }
-        }
-
-        if let Some(last) = self.stack.pop() {
-            let p = last.as_ptr();
-            unsafe {
-                self.pointer = last.as_ref().right;
-                Some((&(*p).key, &(*p).val))
-            }
-        } else {
-            None
-        }
-    }
-}
-
-impl<K, V> Iterator for IntoIter<K, V> {
-    type Item = (K, V);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        while let Some(x) = self.stack.last_mut() {
-            unsafe {
-                if let Some(l) = x.as_mut().left.take() {
-                    self.stack.push(l);
-                } else {
-                    break;
-                }
-            }
-        }
-        if let Some(last) = self.stack.pop() {
-            let mut b = unsafe { Box::from_raw(last.as_ptr()) };
-            b.right.take().map(|x| self.stack.push(x));
-            Some((b.key, b.val))
-        } else {
-            None
         }
     }
 }
@@ -289,5 +215,43 @@ impl<K: Add<Output = K> + Ord + Unit + Clone, V> TreapMap<K, V> {
 impl Unit for i32 {
     fn unit() -> Self {
         1
+    }
+}
+
+impl<K, V> binary_tree::BinaryTreeNode for Node<K, V> {
+    type Key = K;
+    type Value = V;
+
+    fn left(&self) -> &Option<NonNull<Self>> {
+        &self.left
+    }
+
+    fn mut_left(&mut self) -> &mut Option<NonNull<Self>> {
+        &mut self.left
+    }
+    fn right(&self) -> &Option<NonNull<Self>> {
+        &self.right
+    }
+
+    fn mut_right(&mut self) -> &mut Option<NonNull<Self>> {
+        &mut self.right
+    }
+
+    fn move_kv(self) -> (Self::Key, Self::Value) {
+        (self.key, self.val)
+    }
+
+    fn kv(&self) -> (&Self::Key, &Self::Value) {
+        (&self.key, &self.val)
+    }
+}
+
+impl<K, V> binary_tree::BinaryTreeIter for TreapMap<K, V> {
+    type Node = Node<K, V>;
+    fn root(&self) -> Option<NonNull<Self::Node>> {
+        self.root
+    }
+    fn mut_root(&mut self) -> &mut Option<NonNull<Self::Node>> {
+        &mut self.root
     }
 }

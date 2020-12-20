@@ -1,24 +1,44 @@
 use std::{marker::PhantomData, ptr::NonNull};
 
-pub trait BinaryTree {
-    type Node;
+pub trait BinaryTreeIter {
+    type Node: BinaryTreeNode;
+
+    fn root(&self) -> Option<NonNull<Self::Node>>;
+    fn mut_root(&mut self) -> &mut Option<NonNull<Self::Node>>;
+    // fn insert(&mut self, key: Self::Key, val: Self::Value);
+    // fn remove(&mut self, key: &Self::Key) -> bool;
+    fn iter(&self) -> Iter<Self::Node> {
+        Iter {
+            pointer: self.root(),
+            stack: vec![],
+            _marker: PhantomData,
+        }
+    }
+
+    fn into_iter(&mut self) -> IntoIter<Self::Node> {
+        let mut stack = vec![];
+        self.mut_root().take().map(|x| stack.push(x));
+        IntoIter {
+            stack,
+            _marker: PhantomData,
+        }
+    }
 }
 
 pub trait BinaryTreeNode {
     type Key;
     type Value;
+
+    fn kv(&self) -> (&Self::Key, &Self::Value);
+    fn move_kv(self) -> (Self::Key, Self::Value);
     fn left(&self) -> &Option<NonNull<Self>>;
     fn right(&self) -> &Option<NonNull<Self>>;
     fn mut_left(&mut self) -> &mut Option<NonNull<Self>>;
     fn mut_right(&mut self) -> &mut Option<NonNull<Self>>;
-    fn kv(&self) -> (&Self::Key, &Self::Value);
-    fn move_kv(self) -> (Self::Key, Self::Value);
 }
 
-type Edge<Node> = Option<NonNull<Node>>;
-
 pub struct Iter<'a, N: BinaryTreeNode> {
-    pointer: Edge<N>,
+    pointer: Option<NonNull<N>>,
     stack: Vec<NonNull<N>>,
     _marker: PhantomData<&'a N>,
 }
@@ -34,14 +54,12 @@ impl<'a, N: BinaryTreeNode> Iterator for Iter<'a, N> {
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(x) = self.pointer {
             self.stack.push(x);
-            unsafe {
-                self.pointer = *x.as_ref().left();
-            }
+            self.pointer = unsafe { *x.as_ref().left() };
         }
 
         if let Some(last) = self.stack.pop() {
-            let p = last.as_ptr();
             unsafe {
+                let p = last.as_ptr();
                 self.pointer = *last.as_ref().right();
                 Some((*p).kv())
             }
@@ -56,12 +74,10 @@ impl<N: BinaryTreeNode> Iterator for IntoIter<N> {
 
     fn next(&mut self) -> Option<Self::Item> {
         while let Some(x) = self.stack.last_mut() {
-            unsafe {
-                if let Some(l) = x.as_mut().mut_left().take() {
-                    self.stack.push(l);
-                } else {
-                    break;
-                }
+            if let Some(l) = unsafe { x.as_mut().mut_left().take() } {
+                self.stack.push(l);
+            } else {
+                break;
             }
         }
         if let Some(last) = self.stack.pop() {
