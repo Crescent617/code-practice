@@ -1,7 +1,4 @@
-use std::{
-    collections::{BTreeMap, BTreeSet, LinkedList},
-    ptr::NonNull,
-};
+use std::{collections::{BTreeMap, BTreeSet, LinkedList}, ptr::NonNull};
 
 #[allow(unused_macros)]
 macro_rules! input {
@@ -44,8 +41,6 @@ macro_rules! map {
 struct Solution;
 
 use hello_rust::collections::rbtree::*;
-
-
 
 fn main() {
     let mut rb = RBTreeMap::new();

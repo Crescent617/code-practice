@@ -9,12 +9,12 @@ pub mod skip_list;
 pub mod stream;
 pub mod treap;
 
-pub use bitree::BITree;
-pub use leftist_tree::LeftistTree;
-pub use rbtree::RBTreeMap;
-pub use segment_tree::{PstSegTree, SegTree};
-pub use skip_list::SkipListSet;
-pub use treap::TreapMap;
+use bitree::BITree;
+use leftist_tree::LeftistTree;
+use rbtree::RBTreeMap;
+use segment_tree::{PstSegTree, SegTree};
+use skip_list::SkipListSet;
+use treap::TreapMap;
 
 #[allow(unused_macros)]
 macro_rules! timeit {
@@ -149,7 +149,7 @@ mod tests {
             tr.insert(r);
             b.insert(r);
         }
-
+        
         for _ in 0..n {
             let r = &rng.gen_range(i32::MIN, i32::MAX);
             assert_eq!(b.remove(&r), tr.remove(&r));
