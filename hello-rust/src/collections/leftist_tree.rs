@@ -1,11 +1,19 @@
-use std::mem;
+use std::{mem, ptr, rc::Rc};
 
 #[derive(Debug)]
 struct Node<T: Ord> {
     elem: T,
-    left: Edge<T>,
-    right: Edge<T>,
+    left: Link<T>,
+    right: Link<T>,
     dist: usize,
+}
+
+type Link<T> = Option<Box<Node<T>>>;
+
+#[derive(Debug)]
+pub struct LeftistTree<T: Ord> {
+    root: Link<T>,
+    size: usize,
 }
 
 impl<T: Ord> Node<T> {
@@ -17,14 +25,6 @@ impl<T: Ord> Node<T> {
             dist: 0,
         }
     }
-}
-
-type Edge<T> = Option<Box<Node<T>>>;
-
-#[derive(Debug)]
-pub struct LeftistTree<T: Ord> {
-    root: Edge<T>,
-    size: usize,
 }
 
 impl<T: Ord> LeftistTree<T> {
@@ -48,11 +48,11 @@ impl<T: Ord> LeftistTree<T> {
         self.size
     }
 
-    fn get_node_dist(node: &Edge<T>) -> usize {
+    fn get_node_dist(node: &Link<T>) -> usize {
         node.as_ref().map_or(0, |x| x.dist)
     }
 
-    fn merge_node(a: Edge<T>, b: Edge<T>) -> Edge<T> {
+    fn merge_node(a: Link<T>, b: Link<T>) -> Link<T> {
         if a.is_none() || b.is_none() {
             a.or(b)
         } else if let (Some(mut a), Some(mut b)) = (a, b) {
@@ -86,6 +86,86 @@ impl<T: Ord> LeftistTree<T> {
         self.root.take().map(|x| {
             self.root = Self::merge_node(x.left, x.right);
             self.size -= 1;
+            x.elem
+        })
+    }
+}
+
+/// Persistent LeftistTree
+#[derive(Debug)]
+pub struct PstLeftistTree<T: Clone> {
+    roots: Vec<Rc<PstNode<T>>>,
+}
+
+#[derive(Debug, Clone)]
+struct PstNode<T> {
+    elem: T,
+    left: PstLink<T>,
+    right: PstLink<T>,
+    dist: usize,
+}
+
+type PstLink<T> = Option<Rc<PstNode<T>>>;
+
+impl<T> PstNode<T> {
+    fn new(elem: T) -> Self {
+        Self {
+            elem,
+            left: None,
+            right: None,
+            dist: 0,
+        }
+    }
+}
+
+impl<T: Ord + Clone> PstLeftistTree<T> {
+    pub fn new() -> Self {
+        Self { roots: vec![] }
+    }
+
+    fn get_node_dist(node: &PstLink<T>) -> usize {
+        node.as_ref().map_or(0, |x| x.dist)
+    }
+
+    pub fn push(&mut self, val: T) {
+        let pre_root = self.roots.last().map(|x| x.to_owned());
+        let new_node = Some(Rc::new(PstNode::new(val)));
+        self.roots
+            .push(Self::merge_node(pre_root, new_node).unwrap());
+    }
+
+    fn merge_node(a: PstLink<T>, b: PstLink<T>) -> PstLink<T> {
+        if a.is_none() || b.is_none() {
+            a.or(b)
+        } else if let (Some(mut a), Some(mut b)) = (a, b) {
+            if a.elem < b.elem {
+                mem::swap(&mut a, &mut b);
+            }
+
+            let mut node = PstNode::clone(&a);
+
+            node.right = Self::merge_node(node.right, Some(b));
+
+            let ld = Self::get_node_dist(&node.left);
+            let rd = Self::get_node_dist(&node.right);
+
+            if rd > ld {
+                mem::swap(&mut node.left, &mut node.right);
+            }
+
+            node.dist = rd.min(ld) + 1;
+            Some(Rc::new(node))
+        } else {
+            panic!()
+        }
+    }
+
+    pub fn pop(&mut self) -> Option<T> {
+        let pre_root = self.roots.last().map(|x| PstNode::clone(x));
+        pre_root.map(|x| {
+            if let Some(root) = Self::merge_node(x.left, x.right) {
+                self.roots.push(root);
+            }
             x.elem
         })
     }

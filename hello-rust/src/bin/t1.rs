@@ -1,4 +1,7 @@
-use std::{collections::{BTreeMap, BTreeSet, LinkedList}, ptr::NonNull};
+use std::{
+    collections::{BTreeMap, BTreeSet, LinkedList},
+    ptr::NonNull,
+};
 
 #[allow(unused_macros)]
 macro_rules! input {
@@ -40,20 +43,13 @@ macro_rules! map {
 #[derive(Debug)]
 struct Solution;
 
+use hello_rust::collections::leftist_tree::*;
 use hello_rust::collections::rbtree::*;
 
 fn main() {
-    let mut rb = RBTreeMap::new();
-    let mut b = BTreeMap::new();
-    for i in 0..2000 {
-        let k = rand::random::<u8>();
-        b.insert(k, i);
-        rb.insert(k, i);
+    let mut heap = PstLeftistTree::new();
+    for i in (0..10).rev() {
+        heap.push(i);
     }
-    for i in 0..400 {
-        let k = rand::random::<u8>();
-        assert_eq!(rb.remove(&k), b.remove(&k).is_some())
-    }
-
-    // println!("{}", rb);
+    dbg!(heap);
 }
