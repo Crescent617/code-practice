@@ -8,6 +8,7 @@ pub mod segment_tree;
 pub mod skip_list;
 pub mod stream;
 pub mod treap;
+pub mod splay_tree;
 
 use bitree::BITree;
 use leftist_tree::LeftistTree;
@@ -15,6 +16,7 @@ use rbtree::RBTreeMap;
 use segment_tree::{PstSegTree, SegTree};
 use skip_list::SkipListSet;
 use treap::TreapMap;
+use splay_tree::SplayTreeMap;
 
 #[allow(unused_macros)]
 macro_rules! timeit {
@@ -35,6 +37,32 @@ macro_rules! timeit {
         println!("{} use: {:?}", $name, d);
         d
     }};
+}
+
+#[allow(unused_macros)]
+macro_rules! test_map {
+    ($t: tt) => {{
+        let mut s = $t::new();
+        let mut b = BTreeMap::new();
+
+        for i in 0..2000 {
+            let k = rand::random::<i32>();
+            b.insert(k, i);
+            s.insert(k, i);
+            assert_eq!(b.len(), s.len());
+        }
+
+        for _ in 0..2000 {
+            let k = &rand::random::<i32>();
+            assert_eq!(b.get(k), s.get(k));
+        }
+
+        for _ in 0..1000 {
+            let k = rand::random::<i32>();
+            assert_eq!(s.remove(&k), b.remove(&k).is_some());
+            assert_eq!(s.len(), b.len());
+        }
+    }}
 }
 
 #[cfg(test)]
@@ -149,7 +177,7 @@ mod tests {
             tr.insert(r);
             b.insert(r);
         }
-        
+
         for _ in 0..n {
             let r = &rng.gen_range(i32::MIN, i32::MAX);
             assert_eq!(b.remove(&r), tr.remove(&r));
@@ -242,8 +270,34 @@ mod tests {
             assert_eq!(rb.len(), b.len());
         }
 
-        let n = 100000;
+        let n = 400000;
         timeit!("RBTree", {
+            let mut t = RBTreeMap::new();
+            for _ in 0..n {
+                t.insert(rand::random::<i32>(), ());
+            }
+            for _ in 0..n {
+                t.remove(&rand::random::<i32>());
+            }
+        });
+
+        timeit!("BTree", {
+            let mut t = BTreeMap::new();
+            for _ in 0..n {
+                t.insert(rand::random::<i32>(), ());
+            }
+            for _ in 0..n {
+                t.remove(&rand::random::<i32>());
+            }
+        });
+    }
+
+    #[test]
+    fn test_splay() {
+        test_map!(SplayTreeMap);
+
+        let n = 400000;
+        timeit!("SplayTree", {
             let mut t = RBTreeMap::new();
             for _ in 0..n {
                 t.insert(rand::random::<i32>(), ());

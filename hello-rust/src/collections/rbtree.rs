@@ -206,7 +206,7 @@ impl<K: fmt::Display, V> fmt::Display for RBTreeMap<K, V> {
     }
 }
 
-impl<K: Ord + fmt::Display, V> RBTreeMap<K, V> {
+impl<K: Ord, V> RBTreeMap<K, V> {
     pub fn new() -> Self {
         Self { root: None }
     }

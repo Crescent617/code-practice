@@ -43,13 +43,14 @@ macro_rules! map {
 #[derive(Debug)]
 struct Solution;
 
-use hello_rust::collections::leftist_tree::*;
+use hello_rust::collections::splay_tree::*;
 use hello_rust::collections::rbtree::*;
+use std::collections::HashSet;
 
 fn main() {
-    let mut heap = PstLeftistTree::new();
-    for i in (0..10).rev() {
-        heap.push(i);
+    let mut tree = SplayTreeMap::new();
+    for i in 0..10 {
+        tree.insert(rand::random::<u8>(), ());
+        println!("{}", tree);
     }
-    dbg!(heap);
 }

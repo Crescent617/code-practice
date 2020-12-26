@@ -1,6 +1,8 @@
-use std::{marker::PhantomData, ptr::NonNull};
+#![macro_use]
 
-pub trait BinaryTreeIter {
+use std::{fmt, marker::PhantomData, ptr::NonNull};
+
+pub trait BinaryTree {
     type Node: BinaryTreeNode;
 
     fn root(&self) -> Option<NonNull<Self::Node>>;
@@ -88,4 +90,45 @@ impl<N: BinaryTreeNode> Iterator for IntoIter<N> {
             None
         }
     }
+}
+
+macro_rules! impl_iter {
+    ($T: tt) => {
+
+    };
+}
+
+macro_rules! impl_display {
+    ($T: tt) => {
+        impl<K: std::fmt::Debug, V: std::fmt::Debug> std::fmt::Display for Node<K, V> {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                use std::mem;
+                if mem::size_of_val(&self.val) == 0 {
+                    write!(f, "{:?}", self.key)
+                } else {
+                    write!(f, "({:?}, {:?})", self.key, self.val)
+                }
+            }
+        }
+
+        impl<K: std::fmt::Debug, V: std::fmt::Debug> std::fmt::Display for $T<K, V> {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                if let Some(p) = self.root {
+                    let mut stack = vec![(p, 0, false)];
+                    while let Some((cur, i, is_left)) = stack.pop() {
+                        for _ in 0..i {
+                            write!(f, "  |")?;
+                        }
+                        write!(f, "{}", if is_left { "<-" } else { "->" })?;
+                        unsafe {
+                            writeln!(f, "{}", cur.as_ref())?;
+                            cur.as_ref().right.map(|x| stack.push((x, i + 1, false)));
+                            cur.as_ref().left.map(|x| stack.push((x, i + 1, true)));
+                        }
+                    }
+                }
+                write!(f, "")
+            }
+        }
+    };
 }

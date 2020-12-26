@@ -62,11 +62,11 @@ impl<T: Ord> TreapSet<T> {
     }
 
     pub fn iter(&self) -> binary_tree::Iter<Node<T, ()>> {
-        (&self.map as &dyn binary_tree::BinaryTreeIter<Node = Node<T, ()>>).iter()
+        (&self.map as &dyn binary_tree::BinaryTree<Node = Node<T, ()>>).iter()
     }
 
     pub fn into_iter(mut self) -> binary_tree::IntoIter<Node<T, ()>> {
-        (&mut self.map as &mut dyn binary_tree::BinaryTreeIter<Node = Node<T, ()>>).into_iter()
+        (&mut self.map as &mut dyn binary_tree::BinaryTree<Node = Node<T, ()>>).into_iter()
     }
 }
 
@@ -82,11 +82,11 @@ impl<K, V> TreapMap<K, V> {
     }
 
     pub fn iter(&self) -> binary_tree::Iter<Node<K, V>> {
-        (self as &dyn binary_tree::BinaryTreeIter<Node = Node<K, V>>).iter()
+        (self as &dyn binary_tree::BinaryTree<Node = Node<K, V>>).iter()
     }
 
     pub fn into_iter(mut self) -> binary_tree::IntoIter<Node<K, V>> {
-        (&mut self as &mut dyn binary_tree::BinaryTreeIter<Node = Node<K, V>>).into_iter()
+        (&mut self as &mut dyn binary_tree::BinaryTree<Node = Node<K, V>>).into_iter()
     }
 }
 
@@ -246,7 +246,7 @@ impl<K, V> binary_tree::BinaryTreeNode for Node<K, V> {
     }
 }
 
-impl<K, V> binary_tree::BinaryTreeIter for TreapMap<K, V> {
+impl<K, V> binary_tree::BinaryTree for TreapMap<K, V> {
     type Node = Node<K, V>;
     fn root(&self) -> Option<NonNull<Self::Node>> {
         self.root
