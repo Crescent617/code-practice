@@ -1,5 +1,4 @@
 #![allow(dead_code)]
-#![allow(macro_use_extern_crate)]
 
 use ptr::NonNull;
 use std::{cmp::Ordering, marker::PhantomData, mem, ops::Add, ptr, todo};
@@ -16,6 +15,8 @@ struct Node<K, V> {
     right: Link<K, V>,
     size: usize,
 }
+
+impl_debug!(SplayTreeMap);
 
 pub struct SplayTreeMap<K, V> {
     root: Link<K, V>,
@@ -202,5 +203,3 @@ impl<K, V> Drop for SplayTreeMap<K, V> {
         }
     }
 }
-
-impl_display!(SplayTreeMap);

@@ -93,38 +93,29 @@ impl<N: BinaryTreeNode> Iterator for IntoIter<N> {
 }
 
 macro_rules! impl_iter {
-    ($T: tt) => {
-
-    };
+    ($T: tt) => {};
 }
 
-macro_rules! impl_display {
+macro_rules! impl_debug {
     ($T: tt) => {
-        impl<K: std::fmt::Debug, V: std::fmt::Debug> std::fmt::Display for Node<K, V> {
+        impl<K: std::fmt::Debug, V: std::fmt::Debug> std::fmt::Debug for $T<K, V> {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 use std::mem;
-                if mem::size_of_val(&self.val) == 0 {
-                    write!(f, "{:?}", self.key)
-                } else {
-                    write!(f, "({:?}, {:?})", self.key, self.val)
-                }
-            }
-        }
 
-        impl<K: std::fmt::Debug, V: std::fmt::Debug> std::fmt::Display for $T<K, V> {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                if let Some(p) = self.root {
-                    let mut stack = vec![(p, 0, false)];
+                if let Some(root) = self.root {
+                    let mut stack = vec![(root, 0, false)];
+
                     while let Some((cur, i, is_left)) = stack.pop() {
                         for _ in 0..i {
                             write!(f, "  |")?;
                         }
                         write!(f, "{}", if is_left { "<-" } else { "->" })?;
-                        unsafe {
-                            writeln!(f, "{}", cur.as_ref())?;
-                            cur.as_ref().right.map(|x| stack.push((x, i + 1, false)));
-                            cur.as_ref().left.map(|x| stack.push((x, i + 1, true)));
-                        }
+
+                        let p = unsafe { cur.as_ref() };
+                        writeln!(f, "{:?}", p)?;
+
+                        p.right.map(|x| stack.push((x, i + 1, false)));
+                        p.left.map(|x| stack.push((x, i + 1, true)));
                     }
                 }
                 write!(f, "")

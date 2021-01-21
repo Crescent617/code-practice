@@ -9,8 +9,9 @@ pub mod skip_list;
 pub mod stream;
 pub mod treap;
 pub mod splay_tree;
+pub mod dsu;
 
-use bitree::BITree;
+use bitree::BIT;
 use leftist_tree::LeftistTree;
 use rbtree::RBTreeMap;
 use segment_tree::{PstSegTree, SegTree};
@@ -138,7 +139,7 @@ mod tests {
 
     #[test]
     fn test_bit() {
-        let mut b = BITree::new(10);
+        let mut b = BIT::new(10);
         b.update(1, 10);
         b.update(2, 1);
         b.update(3, 15);
@@ -187,32 +188,8 @@ mod tests {
 
     #[test]
     fn test_skip_list() {
+        test_map!(SkipListMap);
         let mut rng = rand::thread_rng();
-        {
-            // test diff
-            let n = 2000;
-            let mut skip = SkipListMap::new();
-            let mut btree = BTreeSet::new();
-
-            for _ in 0..n {
-                let r = rng.gen_range(i32::MIN, i32::MAX);
-                skip.insert(r, r);
-                btree.insert(r);
-                assert_eq!(skip.len(), btree.len());
-            }
-
-            for _ in 0..n / 2 {
-                let r = &rng.gen_range(i32::MIN, i32::MAX);
-                assert_eq!(skip.remove(r), btree.remove(r));
-            }
-
-            for _ in 0..n {
-                let r = &rng.gen_range(i32::MIN, i32::MAX);
-                assert_eq!(skip.get(r).is_some(), btree.get(r).is_some());
-            }
-
-            for i in skip {}
-        }
 
         let n = 100000;
 
@@ -233,7 +210,7 @@ mod tests {
             }
         });
         println!("SkipList height: {}", skip.height());
-        println!("SkipList: {}", skip);
+        println!("SkipList: {:?}", skip);
 
         let mut btree = BTreeSet::new();
         timeit!("BTree insert", {
@@ -255,20 +232,7 @@ mod tests {
 
     #[test]
     fn test_rbtree() {
-        let mut rb = RBTreeMap::new();
-        let mut b = BTreeMap::new();
-
-        for i in 0..2000 {
-            let k = rand::random::<u8>();
-            b.insert(k, i);
-            rb.insert(k, i);
-        }
-
-        for _ in 0..1000 {
-            let k = rand::random::<u8>();
-            assert_eq!(rb.remove(&k), b.remove(&k).is_some());
-            assert_eq!(rb.len(), b.len());
-        }
+        test_map!(RBTreeMap);
 
         let n = 400000;
         timeit!("RBTree", {

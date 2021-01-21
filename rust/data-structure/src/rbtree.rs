@@ -2,6 +2,7 @@
 
 use ptr::NonNull;
 use std::{cmp::Ordering, fmt, marker::PhantomData, mem, ops::Add, ptr, todo};
+use super::binary_tree;
 
 type Link<K, V> = Option<NonNull<Node<K, V>>>;
 
@@ -15,7 +16,7 @@ use Color::*;
 
 use super::treap::TreapMap;
 
-// todo: add size
+#[derive(Debug)]
 struct Node<K, V> {
     key: K,
     val: V,
@@ -24,6 +25,8 @@ struct Node<K, V> {
     color: Color,
     size: usize,
 }
+
+impl_debug!(RBTreeMap);
 
 pub struct RBTreeMap<K, V> {
     root: Link<K, V>,
@@ -172,37 +175,6 @@ impl<K, V> Node<K, V> {
                 .replace_right(NonNull::new_unchecked(self as *mut Self));
             par
         })
-    }
-}
-
-impl<K: fmt::Display, V> fmt::Display for Node<K, V> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let color = match self.color {
-            Red => "R",
-            Black => "B",
-        }
-        .to_string();
-        write!(f, "{}({})", color, self.key)
-    }
-}
-
-impl<K: fmt::Display, V> fmt::Display for RBTreeMap<K, V> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if let Some(p) = self.root {
-            let mut stack = vec![(p, 0, false)];
-            while let Some((cur, i, is_left)) = stack.pop() {
-                for _ in 0..i {
-                    write!(f, "  |")?;
-                }
-                write!(f, "{}", if is_left { "<-" } else { "->" })?;
-                unsafe {
-                    writeln!(f, "{}", cur.as_ref())?;
-                    cur.as_ref().right.map(|x| stack.push((x, i + 1, false)));
-                    cur.as_ref().left.map(|x| stack.push((x, i + 1, true)));
-                }
-            }
-        }
-        write!(f, "END")
     }
 }
 

@@ -2,14 +2,14 @@ use std::ops::{AddAssign, Sub};
 
 // trait BITreeElem = Add + Sub + Default;
 
-pub struct BITree<T>
+pub struct BIT<T>
 where
     T: AddAssign + Sub<Output = T> + Default + Copy,
 {
     buf: Vec<T>,
 }
 
-impl<T> BITree<T>
+impl<T> BIT<T>
 where
     T: AddAssign + Sub<Output = T> + Default + Copy,
 {
@@ -18,7 +18,7 @@ where
         for _ in 0..n + 1 {
             buf.push(T::default());
         }
-        BITree { buf }
+        BIT { buf }
     }
 
     pub fn update(&mut self, i: usize, delta: T) {

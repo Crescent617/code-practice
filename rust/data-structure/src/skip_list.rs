@@ -202,7 +202,7 @@ impl<K, V> Drop for SkipListMap<K, V> {
     }
 }
 
-impl<K: Display, V: Debug> fmt::Display for SkipListMap<K, V> {
+impl<K: Debug, V: Debug> Debug for SkipListMap<K, V> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         for i in (0..self._height).rev() {
             let mut node = self.heads[i];
@@ -213,9 +213,9 @@ impl<K: Display, V: Debug> fmt::Display for SkipListMap<K, V> {
                 unsafe {
                     if cnt < 5 {
                         if size_of_val(&p.as_ref().val) > 0 {
-                            write!(f, "({} => {:?}) -> ", p.as_ref().key, p.as_ref().val)?;
+                            write!(f, "({:?} => {:?}) -> ", p.as_ref().key, p.as_ref().val)?;
                         } else {
-                            write!(f, "{} -> ", p.as_ref().key)?;
+                            write!(f, "{:?} -> ", p.as_ref().key)?;
                         }
                     }
                     node = p.as_ref().nexts[i];
@@ -228,9 +228,9 @@ impl<K: Display, V: Debug> fmt::Display for SkipListMap<K, V> {
     }
 }
 
-impl<T: Display> fmt::Display for SkipListSet<T> {
+impl<T: Debug> fmt::Debug for SkipListSet<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.map)
+        write!(f, "{:?}", self.map)
     }
 }
 

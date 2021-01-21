@@ -4,7 +4,10 @@ use std::{cmp::Ordering, io::SeekFrom, iter::Map, marker::PhantomData, ops::Add,
 
 type Edge<K, V> = Option<NonNull<Node<K, V>>>;
 
+impl_debug!(TreapMap);
+
 // todo: add size
+#[derive(Debug)]
 pub struct Node<K, V> {
     key: K,
     val: V,

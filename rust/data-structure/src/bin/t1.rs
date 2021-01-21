@@ -1,8 +1,3 @@
-use std::{
-    collections::{BTreeMap, BTreeSet, LinkedList},
-    ptr::NonNull,
-};
-
 #[allow(unused_macros)]
 macro_rules! input {
     () => {{
@@ -11,6 +6,34 @@ macro_rules! input {
             .read_line(&mut line)
             .expect("Failed to read line");
         line.trim().to_owned()
+    }};
+}
+
+#[allow(unused_macros)]
+macro_rules! timeit {
+    ($block: tt) => {{
+        use std::time;
+        let end = time::Duration::from_secs(1);
+        let t = time::Instant::now();
+        let mut loop_num = 0;
+        loop {
+            loop_num += 1;
+            $block;
+            if t.elapsed() > end {
+                break;
+            }
+        }
+        let dt = t.elapsed();
+        println!(
+            "run {} loops, mean time usage: {:?}",
+            loop_num,
+            dt / loop_num
+        );
+    }};
+
+    ($name: expr, $block: tt) => {{
+        println!("Test Name: {}", $name);
+        timeit!($block);
     }};
 }
 
@@ -40,17 +63,6 @@ macro_rules! map {
     }};
 }
 
-#[derive(Debug)]
 struct Solution;
 
-use hello_rust::collections::splay_tree::*;
-use hello_rust::collections::rbtree::*;
-use std::collections::HashSet;
-
-fn main() {
-    let mut tree = SplayTreeMap::new();
-    for i in 0..10 {
-        tree.insert(rand::random::<u8>(), ());
-        println!("{}", tree);
-    }
-}
+fn main() {}
