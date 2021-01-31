@@ -2,22 +2,22 @@
 
 pub mod binary_tree;
 pub mod bitree;
+pub mod dsu;
 pub mod leftist_tree;
 pub mod rbtree;
 pub mod segment_tree;
 pub mod skip_list;
+pub mod splay_tree;
 pub mod stream;
 pub mod treap;
-pub mod splay_tree;
-pub mod dsu;
 
-use bitree::BIT;
-use leftist_tree::LeftistTree;
-use rbtree::RBTreeMap;
-use segment_tree::{PstSegTree, SegTree};
-use skip_list::SkipListSet;
-use treap::TreapMap;
-use splay_tree::SplayTreeMap;
+pub use bitree::BIT;
+pub use leftist_tree::LeftistTree;
+pub use rbtree::RBTreeMap;
+pub use segment_tree::{PstSegTree, SegTree};
+pub use skip_list::SkipListSet;
+pub use splay_tree::SplayTreeMap;
+pub use treap::TreapMap;
 
 #[allow(unused_macros)]
 macro_rules! timeit {
@@ -63,7 +63,7 @@ macro_rules! test_map {
             assert_eq!(s.remove(&k), b.remove(&k).is_some());
             assert_eq!(s.len(), b.len());
         }
-    }}
+    }};
 }
 
 #[cfg(test)]
@@ -86,7 +86,7 @@ mod tests {
 
         let t = time::Instant::now();
         for _ in 0..n {
-            heap.push(rng.gen_range(i32::MIN, i32::MAX));
+            heap.push(rng.gen_range(i32::MIN..i32::MAX));
         }
         for _ in 0..n {
             heap.pop();
@@ -97,7 +97,7 @@ mod tests {
 
         let t = time::Instant::now();
         for _ in (0..n).rev() {
-            heap.push(rng.gen_range(i32::MIN, i32::MAX));
+            heap.push(rng.gen_range(i32::MIN..i32::MAX));
         }
         for _ in 0..n {
             heap.pop();
@@ -108,7 +108,7 @@ mod tests {
         let mut h2 = BinaryHeap::new();
 
         for _ in 0..n {
-            let r = rng.gen_range(i32::MIN, i32::MAX);
+            let r = rng.gen_range(i32::MIN..i32::MAX);
             h1.push(r);
             h2.push(r);
         }
@@ -174,13 +174,13 @@ mod tests {
         let mut b = BTreeSet::new();
 
         for _ in 0..n {
-            let r = rng.gen_range(i32::MIN, i32::MAX);
+            let r = rng.gen_range(i32::MIN..i32::MAX);
             tr.insert(r);
             b.insert(r);
         }
 
         for _ in 0..n {
-            let r = &rng.gen_range(i32::MIN, i32::MAX);
+            let r = &rng.gen_range(i32::MIN..i32::MAX);
             assert_eq!(b.remove(&r), tr.remove(&r));
             assert_eq!(b.remove(&r), tr.remove(&r));
         }
@@ -196,17 +196,17 @@ mod tests {
         let mut skip = SkipListSet::new();
         timeit!("SkipList insert", {
             for _ in 0..n {
-                skip.insert(rng.gen_range(i32::MIN, i32::MAX));
+                skip.insert(rng.gen_range(i32::MIN..i32::MAX));
             }
         });
         timeit!("SkipList get", {
             for _ in 0..n {
-                skip.get(&rng.gen_range(i32::MIN, i32::MAX));
+                skip.get(&rng.gen_range(i32::MIN..i32::MAX));
             }
         });
         timeit!("SkipList remove", {
             for _ in 0..n {
-                skip.remove(&rng.gen_range(i32::MIN, i32::MAX));
+                skip.remove(&rng.gen_range(i32::MIN..i32::MAX));
             }
         });
         println!("SkipList height: {}", skip.height());
@@ -215,17 +215,17 @@ mod tests {
         let mut btree = BTreeSet::new();
         timeit!("BTree insert", {
             for _ in 0..n {
-                btree.insert(rng.gen_range(i32::MIN, i32::MAX));
+                btree.insert(rng.gen_range(i32::MIN..i32::MAX));
             }
         });
         timeit!("BTree get", {
             for _ in 0..n {
-                btree.get(&rng.gen_range(i32::MIN, i32::MAX));
+                btree.get(&rng.gen_range(i32::MIN..i32::MAX));
             }
         });
         timeit!("BTree remove", {
             for _ in 0..n {
-                btree.remove(&rng.gen_range(i32::MIN, i32::MAX));
+                btree.remove(&rng.gen_range(i32::MIN..i32::MAX));
             }
         });
     }

@@ -77,7 +77,7 @@ fn main() {
     let mut rng = rand::thread_rng();
     let mut arr = vec![];
     for _ in 0..N {
-        arr.push(Point(rng.gen_range(0, 1000), rng.gen_range(0, 1000)));
+        arr.push(Point(rng.gen_range(0..1000), rng.gen_range(0..1000)));
     }
     let mut d = [[0; N]; N];
     timeit!("calc points dist", {
