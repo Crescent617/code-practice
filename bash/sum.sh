@@ -9,3 +9,4 @@ do
 done
 
 echo "total sum is $sum"
+

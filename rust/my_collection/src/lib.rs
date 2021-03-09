@@ -7,10 +7,10 @@ pub mod leftist_tree;
 pub mod rbtree;
 pub mod segment_tree;
 pub mod skip_list;
+pub mod sparse_table;
 pub mod splay_tree;
 pub mod stream;
 pub mod treap;
-
 pub use bitree::BIT;
 pub use leftist_tree::LeftistTree;
 pub use rbtree::RBTreeMap;
@@ -280,5 +280,14 @@ mod tests {
                 t.remove(&rand::random::<i32>());
             }
         });
+    }
+
+    #[test]
+    fn test_st() {
+        let st = sparse_table::SparseTable::new(&[1, 0, 3, 0, 5, 0]);
+        assert_eq!(st.query(0, 6), 0);
+        assert_eq!(st.query(0, 1), 1);
+        assert_eq!(st.query(2, 4), 0);
+        assert_eq!(st.query(5, 6), 0);
     }
 }
