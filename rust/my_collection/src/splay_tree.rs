@@ -20,6 +20,7 @@ impl_debug!(SplayTreeMap);
 
 pub struct SplayTreeMap<K, V> {
     root: Link<K, V>,
+    _marker: PhantomData<(K, V)>
 }
 
 impl<K, V> Node<K, V> {
@@ -104,7 +105,7 @@ impl<K, V> Node<K, V> {
 
 impl<K: Ord, V> SplayTreeMap<K, V> {
     pub fn new() -> Self {
-        Self { root: None }
+        Self { root: None, _marker: PhantomData }
     }
 
     pub fn len(&self) -> usize {

@@ -1,66 +1,44 @@
 #include <algorithm>
+#include <functional>
 #include <iostream>
+#include <unordered_map>
 #include <vector>
 
 using namespace std;
 
-struct SumUpOperator {
-    inline void operator()(int ele) {
-        static long long sum = 0;
-        sum += ele;
+class Solution {
+   public:
+    int numWays(int n, vector<vector<int>> &relation, int k) {
+        unordered_map<int, vector<int>> rel;
+        for (const auto v : relation) {
+            if (rel.find(v[0]) == rel.end()) {
+                rel.insert(v[0], {});
+            }
+            rel[v[0]].push_back(v[1]);
+        }
+
+        vector<int> cur(n, 0);
+        cur[0] = 1;
+        vector<int> nxt(n, 0);
+
+        for (int i = 0; i < k; i++) {
+            fill(nxt.begin(), nxt.end(), 0);
+            for (int j = 0; j < n; j++) {
+                if (rel.find(j) != rel.end()) {
+                    for (int nxt_person : rel[j]) {
+                        nxt[j] += cur[j];
+                    }
+                }
+            }
+            cur = nxt;
+        }
+        return cur[n - 1];
     }
 };
 
-// int main() {
-//     vector<int> vInt;
-//     const int SIZE_VECTOR = 10000000;
-//     for (int i = 0; i < SIZE_VECTOR; ++i) {
-//         vInt.push_back(i);
-//     }
-//     for (int i = 0; i < 100; ++i) {
-//         for_each(vInt.begin(), vInt.end(), SumUpOperator());
-//     }
-//     // cout << SumUpOperator::sum;
-//     return 0;
-// }
-
-#include <bits/stdc++.h>
-
-#define forn(i, n) for (int i = 0; i < int(n); i++)
-
-using namespace std;
-
-struct seg{
-	int l, r;
-};
-
 int main() {
-	int n, m, k;
-	cin >> n >> m >> k;
-	vector<seg> a(m);
-	forn(i, m){
-		cin >> a[i].l >> a[i].r;
-		--a[i].l;
-	}
-	sort(a.begin(), a.end(), [](const seg &a, const seg &b){
-		return a.l + a.r < b.l + b.r;
-	});
-	vector<int> su(m + 1);
-	forn(i, n - k + 1){
-		int cur = 0;
-		for (int j = m - 1; j >= 0; --j){
-			cur += max(0, min(i + k, a[j].r) - max(i, a[j].l));
-			su[j] = max(su[j], cur);
-		}
-	}
-	int ans = su[0];
-	forn(i, n - k + 1){
-		int cur = 0;
-		forn(j, m){
-			cur += max(0, min(i + k, a[j].r) - max(i, a[j].l));
-			ans = max(ans, cur + su[j + 1]);
-		}
-	}
-	cout << ans << endl;
-	return 0;
+    vector<int> m(10, 0);
+    for (auto i : m) {
+        cout << i << endl;
+    }
 }

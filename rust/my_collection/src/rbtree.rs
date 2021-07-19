@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
+use super::binary_tree;
 use ptr::NonNull;
 use std::{cmp::Ordering, fmt, marker::PhantomData, mem, ops::Add, ptr, todo};
-use super::binary_tree;
 
 type Link<K, V> = Option<NonNull<Node<K, V>>>;
 
@@ -30,6 +30,7 @@ impl_debug!(RBTreeMap);
 
 pub struct RBTreeMap<K, V> {
     root: Link<K, V>,
+    _marker: PhantomData<(K, V)>,
 }
 
 impl<K, V> Node<K, V> {
@@ -180,7 +181,10 @@ impl<K, V> Node<K, V> {
 
 impl<K: Ord, V> RBTreeMap<K, V> {
     pub fn new() -> Self {
-        Self { root: None }
+        Self {
+            root: None,
+            _marker: PhantomData,
+        }
     }
 
     pub fn len(&self) -> usize {

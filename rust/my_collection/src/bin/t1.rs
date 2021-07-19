@@ -1,3 +1,28 @@
+use std::collections::HashMap;
+
+impl Solution {
+    pub fn num_ways(n: i32, relation: Vec<Vec<i32>>, k: i32) -> i32 {
+        let mut rel = HashMap::new();
+        for p in relation {
+            rel.entry(p[0]).or_insert(vec![]).push(p[1]);
+        }
+        let mut cur = vec![0; n as usize];
+        cur[0] = 1;
+
+        for _ in 0..k {
+            let mut nxt = vec![0; n as usize];
+            for (i, c) in cur.into_iter().enumerate() {
+                if c > 0 {
+                    rel.get(&(i as i32))
+                        .map(|nb| nb.iter().for_each(|x| nxt[*x as usize] += 1));
+                }
+            }
+            cur = nxt;
+        }
+        return cur[n as usize - 1];
+    }
+}
+
 struct GridSolver {
     data: Vec<i32>,
     dim: (usize, usize),
@@ -89,9 +114,26 @@ macro_rules! map {
         dict
     }};
 }
+struct Foo {
+    f: Option<Box<dyn Fn()>>,
+}
+
+impl Foo {
+    pub fn new(f: Option<impl Fn() + 'static>) -> Self {
+        Self {
+            //Why can't I just do this?
+            //f: f.map(Box::new)
+
+            //Instead I have to explicitly unwrap/rewrap:
+            f: match f {
+                Some(f) => Some(Box::new(f)),
+                None => None,
+            },
+        }
+    }
+}
 
 fn main() {
-    for i in 0..-1 {
-        println!("Hello World");
-    }
+    let i = 1;
+    println!("{}", i << 31);
 }

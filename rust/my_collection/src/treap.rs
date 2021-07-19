@@ -22,6 +22,7 @@ pub struct TreapSet<T> {
 
 pub struct TreapMap<K, V> {
     root: Edge<K, V>,
+    _marker: PhantomData<Box<(K, V)>>,
 }
 
 impl<K, V> Node<K, V> {
@@ -81,7 +82,10 @@ impl<T: Add<Output = T> + Ord + Unit + Clone> TreapSet<T> {
 
 impl<K, V> TreapMap<K, V> {
     pub fn new() -> Self {
-        Self { root: None }
+        Self {
+            root: None,
+            _marker: PhantomData,
+        }
     }
 
     pub fn iter(&self) -> binary_tree::Iter<Node<K, V>> {
@@ -123,6 +127,7 @@ impl<K: Ord, V> TreapMap<K, V> {
 
         Self {
             root: stk.first().map(|x| *x),
+            _marker: PhantomData
         }
     }
 

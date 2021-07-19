@@ -47,6 +47,7 @@ impl<T: Ord> SkipListSet<T> {
 
 pub struct SkipListMap<K, V> {
     heads: Vec<Link<K, V>>,
+    _marker: PhantomData<(K, V)>,
     _len: usize,
     _height: usize,
 }
@@ -81,6 +82,7 @@ impl<K: Ord, V> SkipListMap<K, V> {
             heads: vec![None; MAX_LEVEL],
             _len: 0,
             _height: 0,
+            _marker: PhantomData
         }
     }
 
