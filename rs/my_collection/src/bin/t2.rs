@@ -35,7 +35,6 @@ macro_rules! map {
     }};
 }
 
-
 #[allow(unused_macros)]
 macro_rules! timeit {
     ($block: tt) => {{
@@ -64,7 +63,6 @@ macro_rules! timeit {
     }};
 }
 
-
 use rand::prelude::*;
 struct Point(i32, i32);
 
@@ -87,4 +85,21 @@ fn main() {
             }
         }
     });
+}
+
+impl Solution {
+    pub fn balanced_string(s: String) -> i32 {
+        let mut cnt = std::collections::HashMap::new();
+        for ele in s.chars() {
+            *cnt.entry(ele).or_insert(0) += 1;
+        }
+
+        let n = s.len() / 4;
+        let mut ans = 0;
+        for c in "QWER".chars() {
+            let ele = *cnt.get(&c).unwrap_or(&0);
+            ans += if ele > n { ele - n } else { n - ele };
+        }
+        ans as i32 / 2
+    }
 }
