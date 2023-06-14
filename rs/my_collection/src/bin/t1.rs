@@ -65,20 +65,6 @@ macro_rules! map {
     }};
 }
 
-impl Solution {
-    pub fn print_bin(num: f64) -> String {
-        let num: i64 = unsafe { std::mem::transmute(num) };
-    }
-}
+struct Solution;
 
-fn main() {
-    use std::panic;
-    let result = panic::catch_unwind(|| {
-        panic!("oh no!");
-    });
-    assert!(result.is_err());
-    let result = panic::catch_unwind(|| {
-        println!("hello!");
-    });
-    assert!(result.is_ok());
-}
+fn main() {}

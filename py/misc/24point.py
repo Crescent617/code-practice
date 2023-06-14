@@ -6,7 +6,6 @@ from typing import List
 
 
 class Solution:
-
     def judgePoint24(self, nums: List[int]) -> bool:
         @lru_cache(None)
         def dfs(nums, expr):
@@ -14,20 +13,27 @@ class Solution:
                 return nums[0] == 24, expr
 
             (a, b), nums = nums[:2], nums[2:]
-            ops = (mul, add, sub) + (b != 0)*(Fraction,)
-            symbols = 'x+-/'
+            ops = (mul, add, sub) + (b != 0) * (Fraction,)
+            symbols = "x+-/"
 
             for idx, op in enumerate(ops):
-                for i in range(len(nums)+1):
+                for i in range(len(nums) + 1):
                     ans = op(a, b)
-                    nxt_expr = f'{expr} -> {a} {symbols[idx]} {b} = {ans}'
+                    nxt_expr = f"{expr} -> {a} {symbols[idx]} {b} = {ans}"
                     done, path = dfs(nums[:i] + (ans,) + nums[i:], nxt_expr)
                     if done:
                         return done, path
-            return False, ''
+            return False, ""
 
         for permu in permutations(nums, 4):
-            done, path = dfs(permu, f'{permu}')
+            done, path = dfs(permu, f"{permu}")
             if done:
                 return path
-        return 'No solution!'
+        return "No solution!"
+
+
+
+if __name__ == "__main__":
+    print(Solution().judgePoint24([4, 1, 8, 7]))
+
+

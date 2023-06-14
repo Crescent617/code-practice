@@ -1,4 +1,4 @@
 #! /bin/bash
 
-read -s input
+read -rs input
 echo "Input is ${input}."
