@@ -1,6 +1,5 @@
-use std::collections::HashMap;
+#![allow(unused_macros)]
 
-#[allow(unused_macros)]
 macro_rules! input {
     () => {{
         let mut line = String::new();
@@ -11,17 +10,16 @@ macro_rules! input {
     }};
 }
 
-#[allow(unused_macros)]
 macro_rules! timeit {
     ($block: tt) => {{
         use std::time;
-        let end = time::Duration::from_secs(1);
+        let dur = time::Duration::from_secs(1);
         let t = time::Instant::now();
         let mut loop_num = 0;
         loop {
             loop_num += 1;
             $block;
-            if t.elapsed() > end {
+            if t.elapsed() > dur {
                 break;
             }
         }
@@ -39,14 +37,12 @@ macro_rules! timeit {
     }};
 }
 
-#[allow(unused_macros)]
 macro_rules! input_num {
     () => {{
         input!().parse().unwrap()
     }};
 }
 
-#[allow(unused_macros)]
 macro_rules! input_nums {
     () => {{
         input!()
@@ -56,7 +52,6 @@ macro_rules! input_nums {
     }};
 }
 
-#[allow(unused_macros)]
 macro_rules! map {
     ($($key: expr => $val: expr), *) => {{
         let mut dict = std::collections::HashMap::new();
@@ -65,6 +60,6 @@ macro_rules! map {
     }};
 }
 
-struct Solution;
-
 fn main() {}
+
+struct Solution;
